@@ -15,6 +15,7 @@ SHELL := /bin/bash
 # Virtual Environment
 VIRTUALENV_DIR ?= virtualenv
 ORCHESTRA_DIR ?= $(VIRTUALENV_DIR)/orchestra
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 # Run all targets
 .PHONY: all
@@ -24,10 +25,20 @@ all: virtualenv orchestra requirements
 clean:
 	rm -rf $(VIRTUALENV_DIR)
 	rm -rf requirements-orchestra.txt
+	find $(ROOT_DIR) -name 'virtualenv' -prune -or -name '.git' -or -type f -name "*.pyc" -print | xargs --no-run-if-empty rm 
 
 .PHONY: virtualenv
 virtualenv:
 	test -d $(VIRTUALENV_DIR) || virtualenv --no-site-packages $(VIRTUALENV_DIR)
+	# Setup PYTHONPATH in bash activate script...
+	# Delete existing entries (if any)
+	sed -i '/_OLD_PYTHONPATHp/d' $(VIRTUALENV_DIR)/bin/activate
+	sed -i '/PYTHONPATH=/d' $(VIRTUALENV_DIR)/bin/activate
+	sed -i '/export PYTHONPATH/d' $(VIRTUALENV_DIR)/bin/activate
+	echo '_OLD_PYTHONPATH=$$PYTHONPATH' >> $(VIRTUALENV_DIR)/bin/activate
+	echo 'PYTHONPATH=${ROOT_DIR}' >> $(VIRTUALENV_DIR)/bin/activate
+	echo 'export PYTHONPATH' >> $(VIRTUALENV_DIR)/bin/activate
+	touch $(VIRTUALENV_DIR)/bin/activate
 
 .PHONY: orchestra
 orchestra: virtualenv

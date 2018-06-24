@@ -12,6 +12,8 @@ import yaml
 from orchestra.specs.mistral.v2 import workflows as mistral_workflow
 from orchestra.specs.native.v1 import models as orchestra_workflow
 
+from orchestraconvert import expressions
+
 # hard coded for testing
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 MISTRAL_WF_PATH = os.path.join(SCRIPT_DIR, 'test/fixtures/mistral/nasa_apod_twitter_post.yaml')
@@ -72,25 +74,6 @@ def group_task_transitions(mistral_transition_list):
 def dict_to_list(d):
     return [{k: v} for k, v in six.iteritems(d)]
 
-def convert_expression(expr):
-    # TODO convert the Jinja / YAQL expression
-    return expr
-
-def convert_expression_dict(expr_dict):
-    converted = {}
-    for k, expr in six.iteritems(expr_dict):
-        converted[k] = convert_expression(expr)
-    return converted
-
-def convert_expression_list(expr_list):
-    converted = []
-    for expr in expr_list:
-        if isinstance(expr, dict):
-            converted.append(convert_expression_dict(expr))
-        else:
-            converted.append(expr)
-    return converted
-
 def convert_workflow_task_transition_simple(transitions, publish, orchestra_expr):
     # if this is a simple name of a task:
     # on-success:
@@ -112,7 +95,7 @@ def convert_workflow_task_transition_simple(transitions, publish, orchestra_expr
 
     # add in published variables
     if publish:
-        publish_converted = convert_expression_dict(publish)
+        publish_converted = expressions.convert_expression_dict(publish)
         simple_transition['publish'] = dict_to_list(publish_converted)
 
     # add in the transition list
@@ -144,7 +127,7 @@ def convert_workflow_task_transition_expr(expression_list, orchestra_expr):
     transitions = []
     for expr, task_list in six.iteritems(expression_list):
         expr_transition = {}
-        expr_converted = convert_expression(expr)
+        expr_converted = expressions.convert_expression(expr)
 
         # for some transitions (on-complete) the orchestra_expr may be empty
         # so only add it in, if it's necessary
@@ -209,7 +192,7 @@ def convert_workflow_tasks(mistral_wf_tasks):
             o_task_spec['action'] = m_task_spec['action']
 
         if m_task_spec.get('input'):
-            o_task_spec['input'] = convert_expression_dict(m_task_spec['input'])
+            o_task_spec['input'] = expressions.convert_expression_dict(m_task_spec['input'])
 
         o_task_transitions = convert_workflow_task_transitions(m_task_spec)
         o_task_spec.update(o_task_transitions)
@@ -225,13 +208,13 @@ def convert_workflow(mistral_wf):
         orchestra_wf['description'] = mistral_wf['description']
 
     if mistral_wf.get('input'):
-        orchestra_wf['input'] = convert_expression_list(mistral_wf['input'])
+        orchestra_wf['input'] = expressions.convert_expression_list(mistral_wf['input'])
 
     if mistral_wf.get('vars'):
-        orchestra_wf['vars'] = convert_expression_list(mistral_wf['vars'])
+        orchestra_wf['vars'] = expressions.convert_expression_list(mistral_wf['vars'])
 
     if mistral_wf.get('output'):
-        orchestra_wf['output'] = convert_expression_list(mistral_wf['output'])
+        orchestra_wf['output'] = expressions.convert_expression_list(mistral_wf['output'])
 
     if mistral_wf.get('tasks'):
         o_tasks = convert_workflow_tasks(mistral_wf['tasks'])
@@ -240,26 +223,23 @@ def convert_workflow(mistral_wf):
 
     return orchestra_wf
 
-def run(filename):
-    # parse the Mistral workflow from file
-    mistral_wf_data = read_yaml(filename)
-
-    # validate the Mistral workflow before we start
-    mistral_wf_spec = mistral_workflow.instantiate(mistral_wf_data)
-    validate_workflow_spec(mistral_wf_spec)
-
-    # convert Mistral -> Orchestra
-    orchestra_wf_data = convert_workflow(mistral_wf_spec.spec)
-
-    # validate we've generated a proper Orchestra workflow
-    orchestra_wf_spec = orchestra_workflow.instantiate(orchestra_wf_data)
-    validate_workflow_spec(orchestra_wf_spec)
-
-    # write out the new Orchestra workflow
-    print obj_to_yaml(orchestra_wf_spec.spec)
-
-
-if __name__ == '__main__':
+def run():
     args = parse_args()
     for f in args.filename:
-        run(f)
+        # parse the Mistral workflow from file
+        mistral_wf_data = read_yaml(f)
+
+        # validate the Mistral workflow before we start
+        mistral_wf_spec = mistral_workflow.instantiate(mistral_wf_data)
+        validate_workflow_spec(mistral_wf_spec)
+
+        # convert Mistral -> Orchestra
+        orchestra_wf_data = convert_workflow(mistral_wf_spec.spec)
+
+        # validate we've generated a proper Orchestra workflow
+        orchestra_wf_spec = orchestra_workflow.instantiate(orchestra_wf_data)
+        validate_workflow_spec(orchestra_wf_spec)
+
+        # write out the new Orchestra workflow
+        print obj_to_yaml(orchestra_wf_spec.spec)
+    return 0

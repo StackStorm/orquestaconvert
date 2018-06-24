@@ -20,18 +20,11 @@ make
 The script takes a single argument, which is the name of the Mistral workflow
 YAML file to convert.
 
-To run the `orchestraconvert.py` script we now need to activate the virtualenv:
+We've also make a simple shell wrapper script that sets up the `virtualenv` 
+(if it doesn't exist) and then performs the conversion:
 
 ``` shell
-source ./virtualenv/bin/activate
-./orchestraconvert.py ./test/fixtures/mistral/nasa_apod_twitter_post.yaml
-```
-
-We've also make a simple shell wrapper script that does this same thing in one command.
-(**NOTE:** It will also create the `virtualenv` if it doesn't exist):
-
-``` shell
-./orchestraconvert.sh ./test/fixtures/mistral/nasa_apod_twitter_post.yaml
+./bin/orchestraconvert.sh ./test/fixtures/mistral/nasa_apod_twitter_post.yaml
 ```
 
 

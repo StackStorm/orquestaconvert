@@ -1,7 +1,8 @@
 version: '2.0'
 
 tutorial.nasa_apod_twitter_post:
-  type: direct
+  # don't put type in here until the following is merged: https://github.com/StackStorm/orchestra/pull/71
+  #type: direct
   input:
     - extra_message
 

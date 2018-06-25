@@ -2,6 +2,13 @@ import six
 
 def convert_expression(expr):
     # TODO convert the Jinja / YAQL expression
+
+    # - task('xxx').result -> result()
+    #    if 'xxx' != current task name, error
+    # - _. -> ctx().
+    # - $. -> ctx().
+    # - st2kv. -> st2kv('xxx')
+    # others
     return expr
 
 def convert_expression_dict(expr_dict):

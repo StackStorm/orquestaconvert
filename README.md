@@ -20,11 +20,22 @@ make
 The script takes a single argument, which is the name of the Mistral workflow
 YAML file to convert.
 
-We've also make a simple shell wrapper script that sets up the `virtualenv` 
-(if it doesn't exist) and then performs the conversion:
+We've made a shell script that sets up the `virtualenv` (if it doesn't exist) and
+then executes the conversion:
 
 ``` shell
 ./bin/orchestraconvert.sh ./test/fixtures/mistral/nasa_apod_twitter_post.yaml
 ```
 
+# Features
+
+* Converts `direct` Mistral Workflows into Orchestra Workflows (general structure)
+* Handles `input`, `output`, `tasks`
+* For each task, `action`, `input`, `publish`, `on-success`, `on-error`, and `on-complete` are all converted
+
+# Limitations
+
+* Does not yet convert `task()`, `st2kv`, `_.xxx` / `$.xxx`, etc in Jinja and YAQL expressions
+* Does not convert `reverse` workflows
+* Does not convert workbooks
 

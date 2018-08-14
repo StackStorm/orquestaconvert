@@ -1,3 +1,4 @@
+import ruamel.yaml.comments
 import six
 
 def convert_expression(expr):
@@ -12,7 +13,7 @@ def convert_expression(expr):
     return expr
 
 def convert_expression_dict(expr_dict):
-    converted = {}
+    converted = ruamel.yaml.comments.CommentedMap()
     for k, expr in six.iteritems(expr_dict):
         converted[k] = convert_expression(expr)
     return converted

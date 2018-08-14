@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
 import argparse
+import collections
 import json
 import os
 import ruamel.yaml
+import ruamel.yaml.comments
 import six
 import sys
 import StringIO
 import yaml
+import yamlloader
 
 from orquesta.specs.mistral.v2 import workflows as mistral_workflow
 from orquesta.specs.native.v1 import models as orquesta_workflow
@@ -18,6 +21,7 @@ from orquestaconvert import expressions
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 MISTRAL_WF_PATH = os.path.join(SCRIPT_DIR, 'test/fixtures/mistral/nasa_apod_twitter_post.yaml')
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert Mistral workflows to Orquesta')
     parser.add_argument('filename', metavar='FILENAME', nargs=1,
@@ -26,12 +30,21 @@ def parse_args():
 
 
 def read_yaml(yaml_filename):
+    # parse data in a format that preserves ordering
     with open(yaml_filename, 'r') as stream:
-        return yaml.safe_load(stream)
+        # safe load with ordered dicts
+        ruamel_data = ruamel.yaml.round_trip_load(stream)
+
+    # parse YAML into a dict
+    with open(yaml_filename, 'r') as stream:
+        data = yaml.load(stream, Loader=yamlloader.ordereddict.CSafeLoader)
+
+    return (data, ruamel_data)
 
 def obj_to_yaml(obj, indent=4):
     # use this different library because PyYAML doesn't handle indenting properly
-    ruyaml = ruamel.yaml.YAML()
+    # rt = round-trip
+    ruyaml = ruamel.yaml.YAML(typ='rt')
     ruyaml.explicit_start = True
     # this crazyness basically sets indents to 'indent'
     # 'sequence' is always supposed to be 'offset' + 2
@@ -46,7 +59,7 @@ def validate_workflow_spec(wf_spec):
         raise ValueError(result)
 
 def group_task_transitions(mistral_transition_list):
-    expr_transitions = {}
+    expr_transitions = ruamel.yaml.comments.CommentedMap()
     simple_transitions = []
     for transition in mistral_transition_list:
         # if this is a string, then the transition is simply the name of the
@@ -86,7 +99,7 @@ def convert_workflow_task_transition_simple(transitions, publish, orquesta_expr)
     #     do:
     #       - do_thing_a
     #       - do_thing_b
-    simple_transition = {}
+    simple_transition = ruamel.yaml.comments.CommentedMap()
 
     # on-complete doesn't have an orquesta_expr, so we should not
     # add the 'when' clause in that case
@@ -126,7 +139,7 @@ def convert_workflow_task_transition_expr(expression_list, orquesta_expr):
     #       - do_thing_c
     transitions = []
     for expr, task_list in six.iteritems(expression_list):
-        expr_transition = {}
+        expr_transition = ruamel.yaml.comments.CommentedMap()
         expr_converted = expressions.convert_expression(expr)
 
         # for some transitions (on-complete) the orquesta_expr may be empty
@@ -142,22 +155,21 @@ def convert_workflow_task_transition_expr(expression_list, orquesta_expr):
     return transitions
 
 def convert_workflow_task_transitions(m_task_spec):
-    o_task_spec = {'next': []}
+    o_task_spec = ruamel.yaml.comments.CommentedMap()
+    o_task_spec['next'] = []
 
-    transitions = {
-        'on-success': {
-            'publish': {},
-            'orquesta_expr': 'succeeded()'
-        },
-        'on-error': {
-            'publish': {},
-            'orquesta_expr': 'failed()'
-        },
-        'on-complete': {
-            'publish': {},
-            'orquesta_expr': None
-        },
-    }
+    transitions = ruamel.yaml.comments.CommentedMap()
+    transitions['on-success'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-success']['publish'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-success']['orquesta_expr'] = 'succeeded()'
+
+    transitions['on-error'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-error']['publish'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-error']['orquesta_expr'] = 'failed()'
+
+    transitions['on-complete'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-complete']['publish'] = ruamel.yaml.comments.CommentedMap()
+    transitions['on-complete']['orquesta_expr'] = None
 
     if m_task_spec.get('publish'):
         transitions['on-success']['publish'] = m_task_spec['publish']
@@ -181,12 +193,12 @@ def convert_workflow_task_transitions(m_task_spec):
                                                                   data['orquesta_expr'])
         o_task_spec['next'].extend(o_trans_expr_list)
 
-    return o_task_spec if o_task_spec['next'] else {}
+    return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
 def convert_workflow_tasks(mistral_wf_tasks):
-    orquesta_wf_tasks = {}
+    orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
     for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
-        o_task_spec = {}
+        o_task_spec = ruamel.yaml.comments.CommentedMap()
 
         if m_task_spec.get('action'):
             o_task_spec['action'] = m_task_spec['action']
@@ -202,7 +214,8 @@ def convert_workflow_tasks(mistral_wf_tasks):
     return orquesta_wf_tasks
 
 def convert_workflow(mistral_wf):
-    orquesta_wf = {'version': '1.0'}
+    orquesta_wf = ruamel.yaml.comments.CommentedMap()
+    orquesta_wf['version'] = '1.0'
 
     if mistral_wf.get('description'):
         orquesta_wf['description'] = mistral_wf['description']
@@ -227,19 +240,21 @@ def run():
     args = parse_args()
     for f in args.filename:
         # parse the Mistral workflow from file
-        mistral_wf_data = read_yaml(f)
+        mistral_wf_data, mistral_wf_data_ruamel = read_yaml(f)
 
         # validate the Mistral workflow before we start
         mistral_wf_spec = mistral_workflow.instantiate(mistral_wf_data)
         validate_workflow_spec(mistral_wf_spec)
 
         # convert Mistral -> Orquesta
-        orquesta_wf_data = convert_workflow(mistral_wf_spec.spec)
+        orquesta_wf_data_ruamel = convert_workflow(mistral_wf_data_ruamel[mistral_wf_spec.name])
+        orquesta_wf_data_str = obj_to_yaml(orquesta_wf_data_ruamel)
+        orquesta_wf_data = yaml.load(orquesta_wf_data_str, Loader=yamlloader.ordereddict.CSafeLoader)
 
         # validate we've generated a proper Orquesta workflow
         orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
         validate_workflow_spec(orquesta_wf_spec)
 
         # write out the new Orquesta workflow
-        print obj_to_yaml(orquesta_wf_spec.spec)
+        print obj_to_yaml(orquesta_wf_data_ruamel)
     return 0

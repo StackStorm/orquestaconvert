@@ -21,7 +21,8 @@ def convert_expression_dict(expr_dict):
 def convert_expression_list(expr_list):
     converted = []
     for expr in expr_list:
-        if isinstance(expr, dict):
+        if (isinstance(expr, dict) or
+            isinstance(expr, ruamel.yaml.comments.CommentedMap)):
             converted.append(convert_expression_dict(expr))
         else:
             converted.append(expr)

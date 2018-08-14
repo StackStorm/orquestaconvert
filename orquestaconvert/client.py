@@ -70,7 +70,8 @@ def group_task_transitions(mistral_transition_list):
         # if the transition is a dict, then it has an expression
         #  key = next task name
         #  value = conditional expression for when this transition should take place
-        elif isinstance(transition, dict):
+        elif (isinstance(transition, dict) or
+              isinstance(transition, ruamel.yaml.comments.CommentedMap)):
             # group transitions by their common expression, this way we can keep
             # all of the transitions with the same expressions in the same
             # `when:` condition
@@ -79,8 +80,8 @@ def group_task_transitions(mistral_transition_list):
                     expr_transitions[expr] = []
                 expr_transitions[expr].append(task_name)
         else:
-            raise ValueError('Task transition is not a "string" or "dict": {}'
-                             .format(transition))
+            raise ValueError('Task transition is not a "string" or "dict": {}  type={}'
+                             .format(transition, type(transition)))
 
     return simple_transitions, expr_transitions
 

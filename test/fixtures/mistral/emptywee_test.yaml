@@ -1,0 +1,44 @@
+---
+version: '2.0'
+
+c_int.wf_test_join:
+  input:
+    - x
+    - y
+    
+  tasks:
+    setup_task:
+      action: core.noop
+      on-success:
+        - validate_X
+        - validate_Y
+
+    validate_X:
+      with-items: ix in <% $.x %>
+      action: core.local
+      input:
+        cmd: 'test <% str($.ix)%> == "ok"'
+      on-success:
+        - wait_validations
+      on-error:
+        - wait_validations
+
+    validate_Y:
+      with-items: iy in <% $.y %>
+      action: core.local
+      input:
+        cmd: 'test <% str($.iy) %> == "ok"'
+      on-success:
+        - wait_validations
+      on-error:
+        - wait_validations
+
+    wait_validations:
+      join: all
+      timeout: 600
+      action: core.noop
+      on-success:
+        - do_it: '<% len($.x) or len($.y) %>'
+
+    do_it:
+      action: core.noop

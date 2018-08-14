@@ -191,6 +191,9 @@ def convert_workflow_tasks(mistral_wf_tasks):
         if m_task_spec.get('action'):
             o_task_spec['action'] = m_task_spec['action']
 
+        if m_task_spec.get('join'):
+            o_task_spec['join'] = m_task_spec['join']
+
         if m_task_spec.get('input'):
             o_task_spec['input'] = expressions.convert_expression_dict(m_task_spec['input'])
 

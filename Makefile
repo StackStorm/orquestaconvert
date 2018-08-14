@@ -14,17 +14,17 @@ SHELL := /bin/bash
 
 # Virtual Environment
 VIRTUALENV_DIR ?= virtualenv
-ORCHESTRA_DIR ?= $(VIRTUALENV_DIR)/orchestra
+ORQUESTA_DIR ?= $(VIRTUALENV_DIR)/orquesta
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 # Run all targets
 .PHONY: all
-all: virtualenv orchestra requirements
+all: virtualenv orquesta requirements
 
 .PHONY: clean
 clean:
 	rm -rf $(VIRTUALENV_DIR)
-	rm -rf requirements-orchestra.txt
+	rm -rf requirements-orquesta.txt
 	find $(ROOT_DIR) -name 'virtualenv' -prune -or -name '.git' -or -type f -name "*.pyc" -print | xargs --no-run-if-empty rm 
 
 .PHONY: virtualenv
@@ -40,12 +40,12 @@ virtualenv:
 	echo 'export PYTHONPATH' >> $(VIRTUALENV_DIR)/bin/activate
 	touch $(VIRTUALENV_DIR)/bin/activate
 
-.PHONY: orchestra
-orchestra: virtualenv
-	test -d $(ORCHESTRA_DIR) || git clone "https://github.com/StackStorm/orchestra" $(ORCHESTRA_DIR)
-	cp $(ORCHESTRA_DIR)/requirements.txt requirements-orchestra.txt
+.PHONY: orquesta
+orquesta: virtualenv
+	test -d $(ORQUESTA_DIR) || git clone "https://github.com/StackStorm/orquesta" $(ORQUESTA_DIR)
+	cp $(ORQUESTA_DIR)/requirements.txt requirements-orquesta.txt
 
 .PHONY: requirements
 requirements: virtualenv
 	$(VIRTUALENV_DIR)/bin/pip install -r requirements.txt
-	$(VIRTUALENV_DIR)/bin/pip install -r requirements-orchestra.txt
+	$(VIRTUALENV_DIR)/bin/pip install -r requirements-orquesta.txt

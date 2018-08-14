@@ -7,4 +7,4 @@ test -d "$VIRTUALENV_DIR" || make
 source virtualenv/bin/activate
 
 # run the script, forwarding all arguments passed to this shell script
-./bin/mistral_to_orchestra.py "$@"
+./bin/mistral_to_orquesta.py "$@"

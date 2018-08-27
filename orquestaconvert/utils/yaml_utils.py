@@ -8,6 +8,7 @@ import yamlloader
 def yaml_to_obj(stream):
     return yaml.load(stream, Loader=yamlloader.ordereddict.CSafeLoader)
 
+
 def read_yaml(yaml_filename):
     # parse data in a format that preserves ordering
     with open(yaml_filename, 'r') as stream:
@@ -19,6 +20,7 @@ def read_yaml(yaml_filename):
         data = yaml_to_obj(stream)
 
     return (data, ruamel_data)
+
 
 def obj_to_yaml(obj, indent=2):
     # use this different library because PyYAML doesn't handle indenting properly

@@ -3,6 +3,7 @@ import six
 
 from orquestaconvert import expressions
 
+
 def group_task_transitions(mistral_transition_list):
     expr_transitions = ruamel.yaml.comments.CommentedMap()
     simple_transitions = []
@@ -30,8 +31,10 @@ def group_task_transitions(mistral_transition_list):
 
     return simple_transitions, expr_transitions
 
+
 def dict_to_list(d):
     return [{k: v} for k, v in six.iteritems(d)]
+
 
 def convert_workflow_task_transition_simple(transitions, publish, orquesta_expr):
     # if this is a simple name of a task:
@@ -62,6 +65,7 @@ def convert_workflow_task_transition_simple(transitions, publish, orquesta_expr)
         simple_transition['do'] = transitions
 
     return simple_transition
+
 
 def convert_workflow_task_transition_expr(expression_list, orquesta_expr):
     # group all complex expressions by their common expression
@@ -99,6 +103,7 @@ def convert_workflow_task_transition_expr(expression_list, orquesta_expr):
         expr_transition['do'] = task_list
         transitions.append(expr_transition)
     return transitions
+
 
 def convert_workflow_task_transitions(m_task_spec):
     o_task_spec = ruamel.yaml.comments.CommentedMap()
@@ -141,6 +146,7 @@ def convert_workflow_task_transitions(m_task_spec):
 
     return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
+
 def convert_workflow_tasks(mistral_wf_tasks):
     orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
     for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
@@ -161,6 +167,7 @@ def convert_workflow_tasks(mistral_wf_tasks):
         orquesta_wf_tasks[task_name] = o_task_spec
 
     return orquesta_wf_tasks
+
 
 def convert_workflow(mistral_wf):
     orquesta_wf = ruamel.yaml.comments.CommentedMap()

@@ -9,17 +9,18 @@ from orquestaconvert import workflows
 from orquestaconvert.utils import yaml_utils
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='Convert Mistral workflows to Orquesta')
     parser.add_argument('filename', metavar='FILENAME', nargs=1,
                         help='Path to the Mistral Workflow YAML file to convert')
     return parser.parse_args()
 
+
 def validate_workflow_spec(wf_spec):
     result = wf_spec.inspect_syntax()
     if result:
         raise ValueError(result)
+
 
 def run():
     args = parse_args()

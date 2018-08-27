@@ -105,6 +105,3 @@ venv.bak/
 
 # virtualenv
 virtualenv/
-
-# orquesta requirements
-requirements-orquesta.txt

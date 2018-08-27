@@ -1,3 +1,5 @@
+[![Build Status](https://circleci.com/gh/EncoreTechnologies/orquestaconvert.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/orquestaconvert) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 # orquestaconvert
 
 Converts Mistral workflows into Orquesta workflows
@@ -24,7 +26,7 @@ We've made a shell script that sets up the `virtualenv` (if it doesn't exist) an
 then executes the conversion:
 
 ``` shell
-./bin/orquestaconvert.sh ./test/fixtures/mistral/nasa_apod_twitter_post.yaml
+./bin/orquestaconvert.sh ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
 ```
 
 # Features

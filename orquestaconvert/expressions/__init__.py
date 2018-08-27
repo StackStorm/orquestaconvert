@@ -1,6 +1,9 @@
 import ruamel.yaml.comments
 import six
+import orquesta.expressions.base
+
 from orquestaconvert.expressions import jinja_expr
+from orquestaconvert.expressions import yaql_expr
 
 
 def convert_expression(expr):
@@ -13,15 +16,21 @@ def convert_expression(expr):
 
 
 def convert_expression_string(expr):
-    # TODO convert the Jinja / YAQL expression
-
     # - task('xxx').result -> result()
     #    if 'xxx' != current task name, error
     # - _. -> ctx().
     # - $. -> ctx().
     # - st2kv. -> st2kv('xxx')
-    # others
-    return jinja_expr.convert_expression_string(expr)
+    # others?
+    for name, evaluator in six.iteritems(orquesta.expressions.base.get_evaluators()):
+        if evaluator.has_expressions(expr):
+            if name == 'jinja':
+                return jinja_expr.convert_expression_string(expr)
+            elif name == 'yaql':
+                return yaql_expr.convert_expression_string(expr)
+
+    # this isn't a Jinja or YAQL expression, so return the raw string
+    return expr
 
 
 def convert_expression_dict(expr_dict):

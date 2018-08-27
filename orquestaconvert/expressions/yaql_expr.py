@@ -1,7 +1,7 @@
 import re
 
-# _. -> ctx().
-CONTEXT_VARS_REGEX = "(_\.([\w]+))"
+# $. -> ctx().
+CONTEXT_VARS_REGEX = "(\$\.([\w]+))"
 CONTEXT_VARS_PATTERN = re.compile(CONTEXT_VARS_REGEX)
 
 # task('xxx').result -> result()

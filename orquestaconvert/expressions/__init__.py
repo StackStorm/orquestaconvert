@@ -1,5 +1,6 @@
 import ruamel.yaml.comments
 import six
+from orquestaconvert.expressions import jinja_expr
 
 
 def convert_expression(expr):
@@ -20,7 +21,7 @@ def convert_expression_string(expr):
     # - $. -> ctx().
     # - st2kv. -> st2kv('xxx')
     # others
-    return expr
+    return jinja_expr.convert_expression_string(expr)
 
 
 def convert_expression_dict(expr_dict):

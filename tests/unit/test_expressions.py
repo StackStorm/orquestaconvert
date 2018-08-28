@@ -1,6 +1,6 @@
 from base_test_case import BaseActionTestCase
 
-from orquestaconvert import expressions
+from orquestaconvert.expressions import ExpressionConverter
 
 
 class TestExpressions(BaseActionTestCase):
@@ -8,7 +8,7 @@ class TestExpressions(BaseActionTestCase):
 
     def test_convert_expression(self):
         expr_dict = {"test": "value"}
-        result = expressions.convert_expression(expr_dict)
+        result = ExpressionConverter.convert(expr_dict)
         self.assertEquals(result, expr_dict)
 
     def test_convert_expression_dict(self):
@@ -16,7 +16,7 @@ class TestExpressions(BaseActionTestCase):
             "jinja_str": "{{ _.test_jinja }}",
             "yaql_str": "<% $.test_yaql %>",
         }
-        result = expressions.convert_expression_dict(expr)
+        result = ExpressionConverter.convert_dict(expr)
         self.assertEquals(result, {
             "jinja_str": "{{ ctx().test_jinja }}",
             "yaql_str": "<% ctx().test_yaql %>",
@@ -30,7 +30,7 @@ class TestExpressions(BaseActionTestCase):
                 "<% $.a %>",
             ]
         }
-        result = expressions.convert_expression_dict(expr)
+        result = ExpressionConverter.convert_dict(expr)
         self.assertEquals(result, {
             "expr_list":
             [
@@ -47,7 +47,7 @@ class TestExpressions(BaseActionTestCase):
                 "nested_yaql": "<% $.a %>",
             }
         }
-        result = expressions.convert_expression_dict(expr)
+        result = ExpressionConverter.convert_dict(expr)
         self.assertEquals(result, {
             "expr_dict":
             {
@@ -61,7 +61,7 @@ class TestExpressions(BaseActionTestCase):
             "{{ _.test_jinja }}",
             "<% $.test_yaql %>",
         ]
-        result = expressions.convert_expression_list(expr)
+        result = ExpressionConverter.convert_list(expr)
         self.assertEquals(result, [
             "{{ ctx().test_jinja }}",
             "<% ctx().test_yaql %>",
@@ -74,7 +74,7 @@ class TestExpressions(BaseActionTestCase):
                 "<% $.a %>",
             ]
         ]
-        result = expressions.convert_expression_list(expr)
+        result = ExpressionConverter.convert_list(expr)
         self.assertEquals(result, [
             "{{ ctx().a }}",
             [
@@ -89,7 +89,7 @@ class TestExpressions(BaseActionTestCase):
                 "nested_yaql": "<% $.a %>",
             }
         ]
-        result = expressions.convert_expression_list(expr)
+        result = ExpressionConverter.convert_list(expr)
         self.assertEquals(result, [
             {
                 "nested_jinja": "{{ ctx().a }}",
@@ -99,15 +99,15 @@ class TestExpressions(BaseActionTestCase):
 
     def test_convert_expression_string_other(self):
         expr = "test some raw string"
-        result = expressions.convert_expression_string(expr)
+        result = ExpressionConverter.convert_string(expr)
         self.assertEquals(result, "test some raw string")
 
     def test_convert_expression_string_jinja(self):
         expr = "{{ _.test }}"
-        result = expressions.convert_expression_string(expr)
+        result = ExpressionConverter.convert_string(expr)
         self.assertEquals(result, "{{ ctx().test }}")
 
     def test_convert_expression_string_yaql(self):
         expr = "<% $.test %>"
-        result = expressions.convert_expression_string(expr)
+        result = ExpressionConverter.convert_string(expr)
         self.assertEquals(result, "<% ctx().test %>")

@@ -4,4 +4,4 @@ import orquestaconvert.client
 
 
 if __name__ == '__main__':
-    sys.exit(orquestaconvert.client.run())
+    sys.exit(orquestaconvert.client.Client().run())

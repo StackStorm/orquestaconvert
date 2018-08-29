@@ -24,7 +24,7 @@ class TestYamlUtils(BaseActionTestCase):
             ('test_list', ['x', 'y'])
         ]))
 
-    def test_yaml_to_obj(self):
+    def test_read_yaml(self):
         fixture_path = self.get_fixture_path('yaml/simple.yaml')
         data, ruamel_data = yaml_utils.read_yaml(fixture_path)
         self.assertEquals(data, {'test_dict': {'a': True}})

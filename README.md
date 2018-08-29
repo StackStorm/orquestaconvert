@@ -34,10 +34,13 @@ then executes the conversion:
 * Converts `direct` Mistral Workflows into Orquesta Workflows (general structure)
 * Handles `input`, `output`, `tasks`
 * For each task, `action`, `input`, `publish`, `on-success`, `on-error`, and `on-complete` are all converted
+* Converts _simple_ Jinja and YAQL expressions
+* Converts `task()`, `st2kv`, `_.xxx` / `$.xxx`, etc in Jinja and YAQL expressions
 
 # Limitations
 
-* Does not yet convert `task()`, `st2kv`, `_.xxx` / `$.xxx`, etc in Jinja and YAQL expressions
+* Does not convert `{% %}` Jinja expressions
+* Does not convert complex Jinja / YAQL expressions
 * Does not convert `reverse` workflows
 * Does not convert workbooks
 

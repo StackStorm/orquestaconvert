@@ -1,4 +1,4 @@
-[![Build Status](https://circleci.com/gh/EncoreTechnologies/orquestaconvert.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/orquestaconvert) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://circleci.com/gh/EncoreTechnologies/orquestaconvert.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/orquestaconvert) [![codecov](https://codecov.io/gh/EncoreTechnologies/orquestaconvert/branch/master/graph/badge.svg)](https://codecov.io/gh/EncoreTechnologies/orquestaconvert) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # orquestaconvert
 

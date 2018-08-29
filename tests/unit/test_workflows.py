@@ -29,7 +29,7 @@ class TestWorkflows(BaseActionTestCase):
 
     def test_group_task_transitions_raises_bad_type(self):
         converter = WorkflowConverter()
-        transitions_list = [ ["list is bad"] ]
+        transitions_list = [["list is bad"]]
         with self.assertRaises(ValueError):
             converter.group_task_transitions(transitions_list)
 
@@ -226,17 +226,14 @@ class TestWorkflows(BaseActionTestCase):
             ('on-success', [
                 OrderedMap([('do_thing_a', '{{ _.x }}')]),
                 OrderedMap([('do_thing_b', '{{ _.x }}')])
-             ],
-            ),
+            ]),
             ('on-error', [
                 OrderedMap([('do_thing_error', '{{ _.e }}')]),
-             ],
-            ),
+            ]),
             ('on-complete', [
                 OrderedMap([('do_thing_sometimes', '{{ _.d }}')]),
                 'do_thing_always'
-             ],
-            ),
+            ]),
         ])
         expr_converter = JinjaExpressionConverter()
         result = converter.convert_task_transitions(task_spec, expr_converter)

@@ -27,28 +27,31 @@ class Client(object):
         if result:
             raise ValueError(result)
 
+    def convert_file(self, filename, expr_type=None):
+        # parse the Mistral workflow from file
+        mistral_wf_data, mistral_wf_data_ruamel = yaml_utils.read_yaml(filename)
+
+        # validate the Mistral workflow before we start
+        mistral_wf_spec = mistral_workflow.instantiate(mistral_wf_data)
+        self.validate_workflow_spec(mistral_wf_spec)
+
+        # convert Mistral -> Orquesta
+        mistral_wf = mistral_wf_data_ruamel[mistral_wf_spec.name]
+        workflow_converter = WorkflowConverter()
+        orquesta_wf_data_ruamel = workflow_converter.convert(mistral_wf, expr_type)
+        orquesta_wf_data_str = yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
+        orquesta_wf_data = yaml_utils.yaml_to_obj(orquesta_wf_data_str)
+
+        # validate we've generated a proper Orquesta workflow
+        orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
+        self.validate_workflow_spec(orquesta_wf_spec)
+
+        # write out the new Orquesta workflow to a YAML string
+        return yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
+
     def run(self):
         args = self.parse_args()
         expr_type = args.expressions
         for f in args.filename:
-            # parse the Mistral workflow from file
-            mistral_wf_data, mistral_wf_data_ruamel = yaml_utils.read_yaml(f)
-
-            # validate the Mistral workflow before we start
-            mistral_wf_spec = mistral_workflow.instantiate(mistral_wf_data)
-            self.validate_workflow_spec(mistral_wf_spec)
-
-            # convert Mistral -> Orquesta
-            mistral_wf = mistral_wf_data_ruamel[mistral_wf_spec.name]
-            workflow_converter = WorkflowConverter()
-            orquesta_wf_data_ruamel = workflow_converter.convert(mistral_wf, expr_type)
-            orquesta_wf_data_str = yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
-            orquesta_wf_data = yaml_utils.yaml_to_obj(orquesta_wf_data_str)
-
-            # validate we've generated a proper Orquesta workflow
-            orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
-            self.validate_workflow_spec(orquesta_wf_spec)
-
-            # write out the new Orquesta workflow
-            print yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
+            print self.convert_file(f, expr_type)
         return 0

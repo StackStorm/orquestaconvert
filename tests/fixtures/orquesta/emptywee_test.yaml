@@ -1,0 +1,44 @@
+---
+version: '1.0'
+input:
+  - x
+  - y
+tasks:
+  setup_task:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - validate_X
+          - validate_Y
+  validate_X:
+    action: core.local
+    input:
+      cmd: test <% str(ctx().ix)%> == "ok"
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - wait_validations
+      - when: '{{ failed() }}'
+        do:
+          - wait_validations
+  validate_Y:
+    action: core.local
+    input:
+      cmd: test <% str(ctx().iy) %> == "ok"
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - wait_validations
+      - when: '{{ failed() }}'
+        do:
+          - wait_validations
+  wait_validations:
+    action: core.noop
+    join: all
+    next:
+      - when: <% succeeded() and (len(ctx().x) or len(ctx().y)) %>
+        do:
+          - do_it
+  do_it:
+    action: core.noop

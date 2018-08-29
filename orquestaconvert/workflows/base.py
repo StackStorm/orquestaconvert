@@ -39,7 +39,7 @@ class WorkflowConverter(object):
     def dict_to_list(self, d):
         return [{k: v} for k, v in six.iteritems(d)]
 
-    def convert_task_transition_simple(self, transitions, publish, orquesta_expr, expr_type):
+    def convert_task_transition_simple(self, transitions, publish, orquesta_expr, expr_converter):
         # if this is a simple name of a task:
         # on-success:
         #   - do_thing_a
@@ -56,7 +56,7 @@ class WorkflowConverter(object):
         # on-complete doesn't have an orquesta_expr, so we should not
         # add the 'when' clause in that case
         if orquesta_expr:
-            simple_transition['when'] = expr_type.wrap_expression(orquesta_expr)
+            simple_transition['when'] = expr_converter.wrap_expression(orquesta_expr)
 
         # add in published variables
         if publish:
@@ -109,10 +109,7 @@ class WorkflowConverter(object):
             transitions.append(expr_transition)
         return transitions
 
-    def convert_task_transitions(self, m_task_spec, expr_type):
-        o_task_spec = ruamel.yaml.comments.CommentedMap()
-        o_task_spec['next'] = []
-
+    def default_task_transition_map(self):
         transitions = ruamel.yaml.comments.CommentedMap()
         transitions['on-success'] = ruamel.yaml.comments.CommentedMap()
         transitions['on-success']['publish'] = ruamel.yaml.comments.CommentedMap()
@@ -125,12 +122,57 @@ class WorkflowConverter(object):
         transitions['on-complete'] = ruamel.yaml.comments.CommentedMap()
         transitions['on-complete']['publish'] = ruamel.yaml.comments.CommentedMap()
         transitions['on-complete']['orquesta_expr'] = None
+        return transitions
+
+    def convert_task_transitions(self, m_task_spec, expr_converter):
+        # group all complex expressions by their common expression
+        # this way we can keep all of the transitions with the same
+        # expressions in the same `when:` condition
+        #
+        # publish:
+        #   good_data: "{{ _.good }}"
+        # publish-on-error:
+        #   bad_data: "{{ _.bad }}"
+        # on-success:
+        #   - do_thing_a: "{{ _.x }}"
+        #   - do_thing_b: "{{ _.x }}"
+        # on-error:
+        #   - do_thing_error: "{{ _.e }}"
+        # on-complete:
+        #   - do_thing_sometimes: "{{ _.d }}"
+        #   - do_thing_always
+        #
+        # should produce the following in orquesta
+        #
+        # next:
+        #   - when: "{{ succeeded() }}"
+        #     publish:
+        #       - good_data: "{{ ctx().good }}"
+        #   - when: "{{ failed() }}"
+        #     publish:
+        #       - bad_data: "{{ ctx().bad }}"
+        #   - when: "{{ succeeded() and ctx().x }}"
+        #     do:
+        #       - do_thing_a
+        #       - do_thing_b
+        #   - when: "{{ failed() and ctx().e }}"
+        #     do:
+        #       - do_thing_error
+        #   - when: "{{ ctx().d }}"
+        #     do:
+        #       - do_thing_sometimes
+        #   - do:
+        #       - do_thing_always
+        o_task_spec = ruamel.yaml.comments.CommentedMap()
+        o_task_spec['next'] = []
+
+        transitions = self.default_task_transition_map()
 
         if m_task_spec.get('publish'):
             transitions['on-success']['publish'] = m_task_spec['publish']
 
         if m_task_spec.get('publish-on-error'):
-            transitions['on-error']['publish'] = m_task_spec['publish']
+            transitions['on-error']['publish'] = m_task_spec['publish-on-error']
 
         for m_transition_name, data in six.iteritems(transitions):
             m_transitions = m_task_spec.get(m_transition_name, [])
@@ -141,7 +183,7 @@ class WorkflowConverter(object):
                 o_trans_simple = self.convert_task_transition_simple(trans_simple,
                                                                      data['publish'],
                                                                      data['orquesta_expr'],
-                                                                     expr_type)
+                                                                     expr_converter)
                 o_task_spec['next'].append(o_trans_simple)
 
             # Create multiple transitions, one for each unique expression
@@ -151,7 +193,7 @@ class WorkflowConverter(object):
 
         return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
-    def convert_tasks(self, mistral_wf_tasks, expr_type):
+    def convert_tasks(self, mistral_wf_tasks, expr_converter):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
             o_task_spec = ruamel.yaml.comments.CommentedMap()
@@ -165,27 +207,32 @@ class WorkflowConverter(object):
             if m_task_spec.get('input'):
                 o_task_spec['input'] = ExpressionConverter.convert_dict(m_task_spec['input'])
 
-            o_task_transitions = self.convert_task_transitions(m_task_spec, expr_type)
+            o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter)
             o_task_spec.update(o_task_transitions)
 
             orquesta_wf_tasks[task_name] = o_task_spec
 
         return orquesta_wf_tasks
 
-    def convert(self, mistral_wf, expr_type=None):
+    def expr_type_converter(self, expr_type):
         if expr_type is None:
-            expr_type = JinjaExpressionConverter
+            expr_converter = JinjaExpressionConverter()
         elif isinstance(expr_type, six.string_types):
+            expr_type = expr_type.lower()
             if expr_type == 'jinja':
-                expr_type = JinjaExpressionConverter
+                expr_converter = JinjaExpressionConverter()
             elif expr_type == 'yaql':
-                expr_type = YaqlExpressionConverter
+                expr_converter = YaqlExpressionConverter()
             else:
                 raise ValueError("Unknown expression type: {}".format(expr_type))
         elif isinstance(expr_type, BaseExpressionConverter):
-            pass
+            expr_converter = expr_type
         else:
             raise ValueError("Unknown expression class type: {}".format(type(expr_type)))
+        return expr_converter
+
+    def convert(self, mistral_wf, expr_type=None):
+        expr_converter = self.expr_type_converter(expr_type)
 
         orquesta_wf = ruamel.yaml.comments.CommentedMap()
         orquesta_wf['version'] = '1.0'
@@ -200,10 +247,10 @@ class WorkflowConverter(object):
             orquesta_wf['vars'] = ExpressionConverter.convert_list(mistral_wf['vars'])
 
         if mistral_wf.get('output'):
-            orquesta_wf['output'] = ExpressionConverter.convert_list(mistral_wf['output'])
+            orquesta_wf['output'] = ExpressionConverter.convert_dict(mistral_wf['output'])
 
         if mistral_wf.get('tasks'):
-            o_tasks = self.convert_tasks(mistral_wf['tasks'], expr_type)
+            o_tasks = self.convert_tasks(mistral_wf['tasks'], expr_converter)
             if o_tasks:
                 orquesta_wf['tasks'] = o_tasks
 

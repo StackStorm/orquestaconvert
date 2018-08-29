@@ -26,12 +26,12 @@ class YaqlExpressionConverter(BaseExpressionConverter):
         return "<% " + expr + " %>"
 
     @classmethod
-    def _replace_unwarp(cls, match):
+    def _replace_unwrap(cls, match):
         return match.group(2).strip()
 
     @classmethod
     def unwrap_expression(cls, expr):
-        return UNWRAP_PATTERN.sub(cls._replace_unwarp, expr)
+        return UNWRAP_PATTERN.sub(cls._replace_unwrap, expr)
 
     @classmethod
     def convert_string(cls, expr):

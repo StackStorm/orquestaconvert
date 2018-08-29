@@ -35,7 +35,7 @@ class ExpressionConverter(object):
         return None
 
     @classmethod
-    def unwarp_expression(cls, expr):
+    def unwrap_expression(cls, expr):
         converter = cls.get_converter(expr)
         if converter:
             return converter.unwrap_expression(expr)

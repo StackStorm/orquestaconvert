@@ -12,5 +12,10 @@ class BaseExpressionConverter(object):
 
     @classmethod
     @abc.abstractmethod
+    def unwrap_expression(cls, expr):
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
     def convert_string(self, expr):
         raise NotImplementedError()

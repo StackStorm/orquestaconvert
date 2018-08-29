@@ -10,6 +10,9 @@ jobs:
       - run:
           name: Run tests
           command: make
+      - run:
+          name: Upload Codecov report
+          command: make codecov
 
 workflows:
   version: 2

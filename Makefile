@@ -58,6 +58,9 @@ test-coverage-html: requirements .test-coverage-html
 .PHONY: test-coveralls
 test-coveralls: requirements .test-coveralls
 
+.PHONY: codecov
+codecov: requirements .codecov
+
 .PHONY: clean-test-coverage
 clean-test-coverage: .clean-test-coverage
 
@@ -202,3 +205,11 @@ update-orquesta-requirements: virtualenv
 	@echo
 	rm -rf $(TEST_COVERAGE_DIR)
 	rm -f $(PYMODULE_DIR)/.coverage
+
+.PHONY: .codecov
+.codecov:
+	@echo
+	@echo "==================== codecov ===================="
+	@echo
+	. $(VIRTUALENV_DIR)/bin/activate; \
+		codecov

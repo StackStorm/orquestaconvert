@@ -11,6 +11,10 @@ OrderedMap = ruamel.yaml.comments.CommentedMap
 class TestWorkflows(BaseTestCase):
     __test__ = True
 
+    def __init__(self, *args, **kwargs):
+        super(TestWorkflows, self).__init__(*args, **kwargs)
+        self.maxDiff = None
+
     def test_group_task_transitions(self):
         converter = WorkflowConverter()
         transitions_list = [
@@ -439,7 +443,7 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         result = converter.convert(mistral_wf)
 
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('version', '1.0'),
             ('description', 'test description'),
             ('input', [
@@ -460,15 +464,15 @@ class TestWorkflows(BaseTestCase):
                     ('var_expr_yaql', "<% ctx().ex %>"),
                 ]),
             ]),
-            ('output', OrderedMap([
-                ('stdout', '{{ ctx().stdout }}'),
-                ('stderr', '<% ctx().stderr %>'),
-            ])),
+            ('output', [
+                {'stdout': '{{ ctx().stdout }}'},
+                {'stderr': '<% ctx().stderr %>'},
+            ]),
             ('tasks', OrderedMap([
                 ('jinja_task', OrderedMap([
                     ('action', 'mypack.actionname'),
                     ('input', OrderedMap([
-                        ('cmd', '{{ ctx().test }}'),
+                        ('cmd', '{{ ctx().test }}')
                     ])),
                 ])),
             ])),

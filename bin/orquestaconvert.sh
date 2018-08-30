@@ -1,11 +1,12 @@
-VIRTUALENV_DIR="virtualenv"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+ORQUESTACONVERT_DIR="${SCRIPT_DIR}/.."
+VIRTUALENV_DIR="${ORQUESTACONVERT_DIR}/virtualenv"
 
 # create virtualenv if it doesn't exit
-test -d "$VIRTUALENV_DIR" || make
+test -d "$VIRTUALENV_DIR" || make -C $ORQUESTACONVERT_DIR requirements
 
 # activate the virtualenv
-source ${SCRIPT_DIR}/../virtualenv/bin/activate
+source ${VIRTUALENV_DIR}/bin/activate
 
 # run the script, forwarding all arguments passed to this shell script
-${SCRIPT_DIR}/../orquestaconvert/client.py "$@"
+${ORQUESTACONVERT_DIR}/orquestaconvert/client.py "$@"

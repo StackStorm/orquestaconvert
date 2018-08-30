@@ -1,0 +1,24 @@
+---
+version: '2.0'
+
+test.workflow_with_output:
+  description: >
+    workflow that contains an output stanza
+  type: direct
+  input:
+    - cmd
+    - filename: null
+    
+  output:
+    stdout: "{{ _.stdout }}"
+    stderr: "{{ _.stderr }}"
+    filename: "{{ _.filename }}"
+    
+  tasks:
+    execute:
+      action: core.local
+      input:
+        cmd: "{{ _.cmd }}"
+      publish:
+        stdout: "{{ task('execute').result.stdout }}"
+        stderr: "{{ task('execute').result.stderr }}"

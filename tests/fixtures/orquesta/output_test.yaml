@@ -1,0 +1,21 @@
+---
+version: '1.0'
+description: >
+  workflow that contains an output stanza
+input:
+  - cmd
+  - filename:
+output:
+  - stdout: '{{ ctx().stdout }}'
+  - stderr: '{{ ctx().stderr }}'
+  - filename: '{{ ctx().filename }}'
+tasks:
+  execute:
+    action: core.local
+    input:
+      cmd: '{{ ctx().cmd }}'
+    next:
+      - when: '{{ succeeded() }}'
+        publish:
+          - stdout: '{{ result().stdout }}'
+          - stderr: '{{ result().stderr }}'

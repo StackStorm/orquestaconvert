@@ -21,3 +21,6 @@ class TestEndToEnd(BaseTestCase):
 
     def test_e2e_emptywee_test(self):
         self.e2e_from_file('emptywee_test.yaml')
+
+    def test_e2e_output_test(self):
+        self.e2e_from_file('output_test.yaml')

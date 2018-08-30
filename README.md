@@ -4,26 +4,13 @@
 
 Converts Mistral workflows into Orquesta workflows
 
-# Setup
-
-This package relies on [Orquesta](https://github.com/StackStorm/orquesta) itself
-along with a few other Python dependencies found in [requirements.txt](requirements.txt).
-
-To handle all of this we have a [Makefile](Makefile) that sets up a
-[virtualenv](https://virtualenv.pypa.io/en/stable/) in the directory `virtualenv/`.
-Creating the `virtualenv` is easy!
-
-``` shell
-make
-```
-
 # Usage
 
 The script takes a single argument, which is the name of the Mistral workflow
 YAML file to convert.
 
-We've made a shell script that sets up the `virtualenv` (if it doesn't exist) and
-then executes the conversion:
+We've made a shell script that sets up a `virtualenv` (if it doesn't exist) that contains
+all dependencies necessary to run the code!
 
 ``` shell
 ./bin/orquestaconvert.sh ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
@@ -43,4 +30,4 @@ then executes the conversion:
 * Does not convert complex Jinja / YAQL expressions
 * Does not convert `reverse` workflows
 * Does not convert workbooks
-
+* Does not convert `task('xxx')` references to non-local tasks, the current task is always assumed.

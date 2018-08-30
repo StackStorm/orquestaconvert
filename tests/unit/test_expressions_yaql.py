@@ -1,9 +1,9 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
 
 
-class TestExpressionsYaql(BaseActionTestCase):
+class TestExpressionsYaql(BaseTestCase):
     __test__ = True
 
     def test_unwrap_expression(self):
@@ -37,6 +37,11 @@ class TestExpressionsYaql(BaseActionTestCase):
         self.assertEquals(result, "<% ctx().test_.other %>")
 
     def test_convert_expression_yaql_task_result(self):
+        expr = "<% task(abc).result.result %>"
+        result = YaqlExpressionConverter.convert_string(expr)
+        self.assertEquals(result, "<% result().result %>")
+
+    def test_convert_expression_yaql_task_result_single_quote(self):
         expr = "<% task('abc').result.result %>"
         result = YaqlExpressionConverter.convert_string(expr)
         self.assertEquals(result, "<% result().result %>")

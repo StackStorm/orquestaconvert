@@ -1,0 +1,17 @@
+---
+version: '1.0'
+input:
+  - extra_message
+tasks:
+  get_apod_url:
+    action: tutorial.nasa_apod
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - apod_url: <% result().result.url %>
+        do:
+          - post_to_twitter
+  post_to_twitter:
+    action: twitter.update_status
+    input:
+      status: <% ctx().extra_message %> <% ctx().apod_url %>

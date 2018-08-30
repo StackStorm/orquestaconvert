@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import sys
 
 from orquesta.specs.mistral.v2 import workflows as mistral_workflow
 from orquesta.specs.native.v1 import models as orquesta_workflow
@@ -11,7 +12,7 @@ from orquestaconvert.utils import yaml_utils
 
 class Client(object):
 
-    def parse_args(self):
+    def parser(self):
         parser = argparse.ArgumentParser(description='Convert Mistral workflows to Orquesta')
         parser.add_argument('-e', '--expressions',
                             choices=['jinja', 'yaql'],
@@ -20,7 +21,7 @@ class Client(object):
                                   ' (things like task transitions in the "when" clause.'))
         parser.add_argument('filename', metavar='FILENAME', nargs=1,
                             help='Path to the Mistral Workflow YAML file to convert')
-        return parser.parse_args()
+        return parser
 
     def validate_workflow_spec(self, wf_spec):
         result = wf_spec.inspect_syntax()
@@ -49,9 +50,13 @@ class Client(object):
         # write out the new Orquesta workflow to a YAML string
         return yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
 
-    def run(self):
-        args = self.parse_args()
+    def run(self, argv):
+        args = self.parser().parse_args(argv)
         expr_type = args.expressions
         for f in args.filename:
-            print self.convert_file(f, expr_type)
+            sys.stdout.write(self.convert_file(f, expr_type))
         return 0
+
+
+if __name__ == '__main__':
+    sys.exit(Client().run(sys.argv[1:]))

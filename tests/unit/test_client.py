@@ -1,19 +1,57 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseCLITestCase
 
 from orquestaconvert.client import Client
 
+import mock
 
-class TestClient(BaseActionTestCase):
+
+class TestClient(BaseCLITestCase):
     __test__ = True
 
-    def e2e_from_file(self, wf_filename):
-        fixture_path = self.get_fixture_path('mistral/' + wf_filename)
-        result = Client().convert_file(fixture_path)
-        expected = self.get_fixture_content('orquesta/' + wf_filename)
-        self.assertEquals(result, expected)
+    def setUp(self):
+        super(TestClient, self).setUp()
+        self.client = Client()
 
-    def test_e2e_nasa_apod_twitter_post(self):
-        self.e2e_from_file('nasa_apod_twitter_post.yaml')
+    def _validate_args(self, args, filename, expected_filename=None):
+        # path to fixture file
+        fixture_path = self.get_fixture_path('mistral/' + filename)
 
-    def test_e2e_emptywee_test(self):
-        self.e2e_from_file('emptywee_test.yaml')
+        # run
+        exit_status = Client().run(args + [fixture_path])
+        self.assertEquals(exit_status, 0)
+
+        # read expected data
+        if not expected_filename:
+            expected_filename = filename
+        expected = self.get_fixture_content('orquesta/' + expected_filename)
+
+        # compare
+        self.stdout.seek(0)
+        stdout = self.stdout.read()
+        self.assertMultiLineEqual(stdout, expected)
+
+    def test_run(self):
+        self._validate_args([], 'nasa_apod_twitter_post.yaml')
+
+    def test_run_jinja(self):
+        self._validate_args(['-e', 'jinja'], 'nasa_apod_twitter_post.yaml')
+
+    def test_run_yaql(self):
+        self._validate_args(['-e', 'yaql'],
+                            'nasa_apod_twitter_post_yaql.yaml',
+                            'nasa_apod_twitter_post_yaql.yaml')
+
+    def test_run_expression_jinja(self):
+        self._validate_args(['--expression', 'jinja'], 'nasa_apod_twitter_post.yaml')
+
+    def test_run_expression_yaql(self):
+        self._validate_args(['--expression', 'yaql'],
+                            'nasa_apod_twitter_post_yaql.yaml',
+                            'nasa_apod_twitter_post_yaql.yaml')
+
+    def test_validate_workflow_spec_raises(self):
+        wf_spec = mock.MagicMock()
+        wf_spec.inspect_syntax.return_value = "some error string"
+
+        with self.assertRaises(ValueError):
+            self.client.validate_workflow_spec(wf_spec)

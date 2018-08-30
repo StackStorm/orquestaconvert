@@ -1,9 +1,9 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 
 
-class TestExpressionsJinja(BaseActionTestCase):
+class TestExpressionsJinja(BaseTestCase):
     __test__ = True
 
     def test_unwrap_expression(self):

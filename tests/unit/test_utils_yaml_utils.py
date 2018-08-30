@@ -1,4 +1,4 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.utils import yaml_utils
 
@@ -6,7 +6,7 @@ import ruamel.yaml
 OrderedMap = ruamel.yaml.comments.CommentedMap
 
 
-class TestYamlUtils(BaseActionTestCase):
+class TestYamlUtils(BaseTestCase):
     __test__ = True
 
     def test_yaml_to_obj(self):

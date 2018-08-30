@@ -1,11 +1,11 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.utils import type_utils
 
 import ruamel.yaml
 
 
-class TestTypeUtils(BaseActionTestCase):
+class TestTypeUtils(BaseTestCase):
     __test__ = True
 
     def test_dict_types(self):

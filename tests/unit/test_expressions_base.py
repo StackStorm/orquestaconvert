@@ -1,9 +1,9 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.base import BaseExpressionConverter
 
 
-class TestExpressionsBase(BaseActionTestCase):
+class TestExpressionsBase(BaseTestCase):
     __test__ = True
 
     def test_wrap_expression_raises(self):

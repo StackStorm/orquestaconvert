@@ -1,11 +1,11 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions import ExpressionConverter
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
 
 
-class TestExpressions(BaseActionTestCase):
+class TestExpressions(BaseTestCase):
     __test__ = True
 
     def test_convert_expr_dict(self):

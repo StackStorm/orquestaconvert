@@ -1,4 +1,4 @@
-from base_test_case import BaseActionTestCase
+from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
@@ -8,7 +8,7 @@ import ruamel.yaml
 OrderedMap = ruamel.yaml.comments.CommentedMap
 
 
-class TestWorkflows(BaseActionTestCase):
+class TestWorkflows(BaseTestCase):
     __test__ = True
 
     def test_group_task_transitions(self):

@@ -11,7 +11,7 @@ CONTEXT_VARS_PATTERN = re.compile(CONTEXT_VARS_REGEX)
 
 # task('xxx').result -> result()
 #    if 'xxx' != current task name, error
-TASK_RESULT_REGEX = "(task\([\"\']\w+[\"\']\).result)"
+TASK_RESULT_REGEX = "(task\([\"\']*\w+[\"\']*\).result)"
 TASK_RESULT_PATTERN = re.compile(TASK_RESULT_REGEX)
 
 # - st2kv. -> st2kv('xxx')

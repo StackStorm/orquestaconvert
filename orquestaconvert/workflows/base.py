@@ -266,7 +266,7 @@ class WorkflowConverter(object):
         orquesta_wf['version'] = '1.0'
 
         for attr in WORKFLOW_UNSUPPORTED_ATTRIBUTES:
-            if attr in orquesta_wf:
+            if attr in mistral_wf:
                 raise NotImplementedError(("Workflow contains an attribute '{}' that is not"
                                            " supported in orquesta.").format(attr))
 

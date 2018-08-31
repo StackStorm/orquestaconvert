@@ -549,7 +549,7 @@ class TestWorkflows(BaseTestCase):
         with self.assertRaises(NotImplementedError):
             converter.convert(mistral_wf)
 
-    def test_convert_workflow_unsupported_attributes(self):
+    def test_convert_workflow_unsupported_types(self):
         converter = WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert(OrderedMap([

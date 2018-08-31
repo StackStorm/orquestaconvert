@@ -34,7 +34,7 @@ class TestWorkflows(BaseTestCase):
     def test_group_task_transitions_raises_bad_type(self):
         converter = WorkflowConverter()
         transitions_list = [["list is bad"]]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             converter.group_task_transitions(transitions_list)
 
     def test_dict_to_list(self):
@@ -366,6 +366,62 @@ class TestWorkflows(BaseTestCase):
             ]))
         ]))
 
+    def _create_task(self, attr):
+        return OrderedMap([
+            ('bad_task', OrderedMap([
+                ('action', 'mypack.actionname'),
+                attr,
+            ]))
+        ])
+
+    def test_convert_tasks_unsupported_attributes(self):
+        converter = WorkflowConverter()
+        expr_converter = YaqlExpressionConverter()
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('concurrency', 3))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('keep-result', True))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('pause-before', True))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('retry', True))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('safe-rerun', True))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('target', 'some-node'))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('timeout', 60))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('wait-after', 60))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('wait-before', 60))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('with-items', "{{ [a, b, c] "))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
+        with self.assertRaises(NotImplementedError):
+            mistral_tasks = self._create_task(('workflow', 'someworkflowname'))
+            converter.convert_tasks(mistral_tasks, expr_converter)
+
     def test_expr_type_converter_none(self):
         expr_type = None
         converter = WorkflowConverter()
@@ -387,7 +443,7 @@ class TestWorkflows(BaseTestCase):
     def test_expr_type_converter_string_bad_raises(self):
         expr_type = 'junk'
         converter = WorkflowConverter()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             converter.expr_type_converter(expr_type)
 
     def test_expr_type_converter_class_jinja(self):
@@ -405,7 +461,7 @@ class TestWorkflows(BaseTestCase):
     def test_expr_type_converter_class_bad_raises(self):
         expr_type = []
         converter = WorkflowConverter()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             converter.expr_type_converter(expr_type)
 
     def test_convert_empty(self):
@@ -417,16 +473,17 @@ class TestWorkflows(BaseTestCase):
     def test_convert_all(self):
         mistral_wf = OrderedMap([
             ('description', 'test description'),
+            ('type', 'direct'),
             ('input', [
                 'data',
                 {'jinja_expr': "{{ _.test }}"},
                 {'yaql_expr': "<% $.test %>"},
             ]),
-            ('vars', [
-                'var_data',
-                {'var_expr_jinja': "{{ _.ex }}"},
-                {'var_expr_yaql': "<% $.ex %>"},
-            ]),
+            ('vars', OrderedMap([
+                ('var_data', "data"),
+                ('var_expr_jinja', "{{ _.ex }}"),
+                ('var_expr_yaql', "<% $.ex %>"),
+            ])),
             ('output', OrderedMap([
                 ('stdout', "{{ _.stdout }}"),
                 ('stderr', "<% $.stderr %>"),
@@ -456,7 +513,9 @@ class TestWorkflows(BaseTestCase):
                 ]),
             ]),
             ('vars', [
-                'var_data',
+                OrderedMap([
+                    ('var_data', "data"),
+                ]),
                 OrderedMap([
                     ('var_expr_jinja', "{{ ctx().ex }}"),
                 ]),
@@ -477,3 +536,29 @@ class TestWorkflows(BaseTestCase):
                 ])),
             ])),
         ]))
+
+    def test_convert_workflow_unsupported_attributes(self):
+        mistral_wf = OrderedMap([
+            ('version', '1.0'),
+            ('output-on-error', OrderedMap([
+                ('stdout', "{{ _.stdout }}"),
+                ('stderr', "<% $.stderr %>"),
+            ])),
+        ])
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert(mistral_wf)
+
+    def test_convert_workflow_unsupported_attributes(self):
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert(OrderedMap([
+                ('version', '1.0'),
+                ('type', 'reverse'),
+            ]))
+
+        with self.assertRaises(NotImplementedError):
+            converter.convert(OrderedMap([
+                ('version', '1.0'),
+                ('type', 'junk'),
+            ]))

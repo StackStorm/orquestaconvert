@@ -7,6 +7,28 @@ from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
 from orquestaconvert.utils import type_utils
 
+WORKFLOW_TYPES = [
+    'direct',
+]
+
+WORKFLOW_UNSUPPORTED_ATTRIBUTES = [
+    'output-on-error',
+]
+
+TASK_UNSUPPORTED_ATTRIBUTES = [
+    'concurrency',
+    'keep-result',
+    'pause-before',
+    'retry',
+    'safe-rerun',
+    'target',
+    'timeout',
+    'wait-after',
+    'wait-before',
+    'with-items',
+    'workflow',
+]
+
 
 class WorkflowConverter(object):
 
@@ -31,8 +53,8 @@ class WorkflowConverter(object):
                         expr_transitions[expr] = []
                     expr_transitions[expr].append(task_name)
             else:
-                raise ValueError('Task transition is not a "string" or "dict": {}  type={}'
-                                 .format(transition, type(transition)))
+                raise TypeError('Task transition is not a "string" or "dict": {}  type={}'
+                                .format(transition, type(transition)))
 
         return simple_transitions, expr_transitions
 
@@ -198,6 +220,12 @@ class WorkflowConverter(object):
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
             o_task_spec = ruamel.yaml.comments.CommentedMap()
 
+            for attr in TASK_UNSUPPORTED_ATTRIBUTES:
+                if attr in m_task_spec:
+                    raise NotImplementedError(("Task '{}' contains an attribute '{}' that is not"
+                                               " supported in orquesta.").
+                                              format(task_name, attr))
+
             if m_task_spec.get('action'):
                 o_task_spec['action'] = m_task_spec['action']
 
@@ -224,11 +252,11 @@ class WorkflowConverter(object):
             elif expr_type == 'yaql':
                 expr_converter = YaqlExpressionConverter()
             else:
-                raise ValueError("Unknown expression type: {}".format(expr_type))
+                raise TypeError("Unknown expression type: {}".format(expr_type))
         elif isinstance(expr_type, BaseExpressionConverter):
             expr_converter = expr_type
         else:
-            raise ValueError("Unknown expression class type: {}".format(type(expr_type)))
+            raise TypeError("Unknown expression class type: {}".format(type(expr_type)))
         return expr_converter
 
     def convert(self, mistral_wf, expr_type=None):
@@ -237,14 +265,26 @@ class WorkflowConverter(object):
         orquesta_wf = ruamel.yaml.comments.CommentedMap()
         orquesta_wf['version'] = '1.0'
 
+        for attr in WORKFLOW_UNSUPPORTED_ATTRIBUTES:
+            if attr in orquesta_wf:
+                raise NotImplementedError(("Workflow contains an attribute '{}' that is not"
+                                           " supported in orquesta.").format(attr))
+
         if mistral_wf.get('description'):
             orquesta_wf['description'] = mistral_wf['description']
+
+        if mistral_wf.get('type'):
+            if mistral_wf['type'] not in WORKFLOW_TYPES:
+                raise NotImplementedError(("Workflows of type '{}' are NOT supported."
+                                           " Only 'direct' workflows can be converted").
+                                          format(mistral_wf['type']))
 
         if mistral_wf.get('input'):
             orquesta_wf['input'] = ExpressionConverter.convert_list(mistral_wf['input'])
 
         if mistral_wf.get('vars'):
-            orquesta_wf['vars'] = ExpressionConverter.convert_list(mistral_wf['vars'])
+            vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
+            orquesta_wf['vars'] = self.dict_to_list(vars)
 
         if mistral_wf.get('output'):
             output = ExpressionConverter.convert_dict(mistral_wf['output'])

@@ -1,0 +1,2 @@
+---
+key: this is some super super super long line that would normally cause a line wrap when converting from dict to yaml. instead we don't want to do that and just keep this one crazy long line.

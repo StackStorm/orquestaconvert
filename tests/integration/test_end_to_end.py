@@ -20,7 +20,8 @@ class TestEndToEnd(BaseTestCase):
         self.e2e_from_file('nasa_apod_twitter_post.yaml')
 
     def test_e2e_emptywee_test(self):
-        self.e2e_from_file('emptywee_test.yaml')
+        with self.assertRaises(NotImplementedError):
+            self.e2e_from_file('emptywee_test.yaml')
 
     def test_e2e_output_test(self):
         self.e2e_from_file('output_test.yaml')

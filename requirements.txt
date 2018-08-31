@@ -1,3 +1,4 @@
 ruamel.yaml>=0.15.0
 yamlloader>=0.5.0
--e git+https://github.com/StackStorm/orquesta.git#egg=orquesta
+#-e git+https://github.com/StackStorm/orquesta.git#egg=orquesta
+-e git+https://github.com/nmaludy/orquesta.git#egg=orquesta

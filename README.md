@@ -28,6 +28,19 @@ all dependencies necessary to run the code!
 
 * Does not convert `{% %}` Jinja expressions
 * Does not convert complex Jinja / YAQL expressions
-* Does not convert `reverse` workflows
-* Does not convert workbooks
+* Does not convert `reverse` type workflows
+* Does not convert workbooks (multiple workflows in the same file
 * Does not convert `task('xxx')` references to non-local tasks, the current task is always assumed.
+* Does not convert workflows with an `output-on-error` stanza
+* Does not convert workflows if the tasks contain one or more of the following attributes
+    * `concurrency`
+    * `keep-result`
+    * `pause-before`
+    * `retry`
+    * `safe-rerun`
+    * `target`
+    * `timeout`
+    * `wait-after`
+    * `wait-before`
+    * `with-items`
+    * `workflow`

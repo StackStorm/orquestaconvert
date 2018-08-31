@@ -47,3 +47,12 @@ class TestYamlUtils(BaseTestCase):
         ruamel_data = {'test_dict': {'a': True}}
         result = yaml_utils.obj_to_yaml(ruamel_data)
         self.assertEquals(result, self.get_fixture_content('yaml/simple.yaml'))
+
+    def test_obj_to_yaml_no_line_wrap(self):
+        ruamel_data = {
+            'key': ("this is some super super super long line that would normally cause"
+                    " a line wrap when converting from dict to yaml. instead we don't want"
+                    " to do that and just keep this one crazy long line.")
+        }
+        result = yaml_utils.obj_to_yaml(ruamel_data)
+        self.assertEquals(result, self.get_fixture_content('yaml/no_line_wrap.yaml'))

@@ -30,6 +30,8 @@ def obj_to_yaml(obj, indent=2):
     # this crazyness basically sets indents to 'indent'
     # 'sequence' is always supposed to be 'offset' + 2
     ruyaml.indent(mapping=indent, sequence=(indent + 2), offset=indent)
+    # prevent line-wrap
+    ruyaml.width = 99999999999
     stream = StringIO.StringIO()
     ruyaml.dump(obj, stream)
     return stream.getvalue()

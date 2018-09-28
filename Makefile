@@ -22,6 +22,38 @@ PY_FILES   := $(shell git ls-files '*.py')
 TEST_COVERAGE_DIR ?= $(ROOT_DIR)/cover
 NOSE_OPTS := -s -v --exe --rednose --immediate --with-coverage --cover-inclusive --cover-erase --cover-package=$(PYMODULE_NAME)
 
+# Detect the OS
+# https://stackoverflow.com/a/14777895
+ifeq ($(OS),Windows_NT)
+	detected_OS := Windows
+else
+	detected_OS := $(shell sh -c 'uname -s 2>/dev/null || echo no')
+endif
+
+# For a list of unames, see https://stackoverflow.com/a/14777895
+BSD_USERLANDS := Darwin FreeBSD NetBSD DragonFly
+# Note: GNU/kFreeBSD is the Debian GNU userland running on the BSD kernel
+GNU_USERLANDS := Linux GNU GNU/kFreeBSD
+
+# From https://stackoverflow.com/a/27335439
+# If the result of searching for the detected_OS value in BSD_USERLANDS is not
+# empty, then run the BSD sed block, run the same check for GNU_USERLANDS, or
+# if nothing matches, then we simply guess how to tell sed to modify files
+# in-place.
+ifneq ($(filter $(detected_OS),$(BSD_USERLANDS)),)
+	# BSD sed requires an extension after the -i flag for the extension of the
+	# backup file it creates (so...it's not actually "in-place"). Here we
+	# disable that by passing in an empty string, and telling sed to go back
+	# to parsing it's normal expressions by adding the -e flag.
+	SED_INPLACE_FLAGS := -i'' -e
+else ifneq ($(filter $(detected_OS),$(GNU_USERLANDS)),)
+	# Asking sed to replace files in-place is a little easier with GNU sed
+	SED_INPLACE_FLAGS := -i
+else
+	# All bets are off. We need to guess.
+	SED_INPLACE_FLAGS := -i
+endif
+
 # Virtual Environment
 VIRTUALENV_DIR ?= $(ROOT_DIR)/virtualenv
 ORQUESTA_DIR ?= $(VIRTUALENV_DIR)/orquesta
@@ -83,9 +115,9 @@ $(VIRTUALENV_DIR)/bin/activate:
 	test -d $(VIRTUALENV_DIR) || virtualenv --no-site-packages $(VIRTUALENV_DIR)
 # Setup PYTHONPATH in bash activate script...
 # Delete existing entries (if any)
-	sed -i '/_OLD_PYTHONPATHp/d' $(VIRTUALENV_DIR)/bin/activate
-	sed -i '/PYTHONPATH=/d' $(VIRTUALENV_DIR)/bin/activate
-	sed -i '/export PYTHONPATH/d' $(VIRTUALENV_DIR)/bin/activate
+	sed $(SED_INPLACE_FLAGS) '/_OLD_PYTHONPATHp/d' $(VIRTUALENV_DIR)/bin/activate
+	sed $(SED_INPLACE_FLAGS) '/PYTHONPATH=/d' $(VIRTUALENV_DIR)/bin/activate
+	sed $(SED_INPLACE_FLAGS) '/export PYTHONPATH/d' $(VIRTUALENV_DIR)/bin/activate
 	echo '_OLD_PYTHONPATH=$$PYTHONPATH' >> $(VIRTUALENV_DIR)/bin/activate
 	echo 'PYTHONPATH=${ROOT_DIR}' >> $(VIRTUALENV_DIR)/bin/activate
 	echo 'export PYTHONPATH' >> $(VIRTUALENV_DIR)/bin/activate

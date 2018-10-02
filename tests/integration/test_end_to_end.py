@@ -25,3 +25,6 @@ class TestEndToEnd(BaseTestCase):
 
     def test_e2e_output_test(self):
         self.e2e_from_file('output_test.yaml')
+
+    def test_e2e_transition_strings_test(self):
+        self.e2e_from_file('transition_strings.yaml')

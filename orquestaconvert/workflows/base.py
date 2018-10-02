@@ -34,6 +34,12 @@ class WorkflowConverter(object):
 
     def group_task_transitions(self, mistral_transition_list):
         expr_transitions = ruamel.yaml.comments.CommentedMap()
+
+        # If the transition is just a string, convert it to a list containing
+        # the string
+        if isinstance(mistral_transition_list, six.string_types):
+            mistral_transition_list = [mistral_transition_list]
+
         simple_transitions = []
         for transition in mistral_transition_list:
             # if this is a string, then the transition is simply the name of the

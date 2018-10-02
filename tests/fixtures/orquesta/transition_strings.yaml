@@ -1,0 +1,11 @@
+---
+version: '1.0'
+tasks:
+  task_one:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - task_two
+  task_two:
+    action: core.noop

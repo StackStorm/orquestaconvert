@@ -31,6 +31,12 @@ class TestWorkflows(BaseTestCase):
                                ("expression", ["key2"])])
         self.assertEquals(expr, expected)
 
+    def test_group_task_string_transition(self):
+        converter = WorkflowConverter()
+        transitions_string = 'next_task'
+        simple, expr = converter.group_task_transitions(transitions_string)
+        self.assertEquals(simple, ['next_task'])
+
     def test_group_task_transitions_raises_bad_type(self):
         converter = WorkflowConverter()
         transitions_list = [["list is bad"]]

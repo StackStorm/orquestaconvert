@@ -1,0 +1,11 @@
+---
+version: '2.0'
+
+circleci.test_transition_string:
+  tasks:
+    task_one:
+      action: core.noop
+      on-success: task_two
+
+    task_two:
+      action: core.noop

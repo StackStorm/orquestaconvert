@@ -221,16 +221,21 @@ class WorkflowConverter(object):
 
         return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
-    def convert_tasks(self, mistral_wf_tasks, expr_converter):
+    def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
             o_task_spec = ruamel.yaml.comments.CommentedMap()
-
-            for attr in TASK_UNSUPPORTED_ATTRIBUTES:
-                if attr in m_task_spec:
-                    raise NotImplementedError(("Task '{}' contains an attribute '{}' that is not"
-                                               " supported in orquesta.").
-                                              format(task_name, attr))
+            if force:
+                for attr in TASK_UNSUPPORTED_ATTRIBUTES:
+                    val = m_task_spec.get(attr)
+                    if val:
+                        o_task_spec[attr] = val
+            else:
+                for attr in TASK_UNSUPPORTED_ATTRIBUTES:
+                    if attr in m_task_spec:
+                        raise NotImplementedError(("Task '{}' contains an attribute '{}'"
+                                                   " that is not supported in orquesta.").
+                                                  format(task_name, attr))
 
             if m_task_spec.get('action'):
                 o_task_spec['action'] = m_task_spec['action']
@@ -265,16 +270,21 @@ class WorkflowConverter(object):
             raise TypeError("Unknown expression class type: {}".format(type(expr_type)))
         return expr_converter
 
-    def convert(self, mistral_wf, expr_type=None):
+    def convert(self, mistral_wf, expr_type=None, force=False):
         expr_converter = self.expr_type_converter(expr_type)
-
         orquesta_wf = ruamel.yaml.comments.CommentedMap()
         orquesta_wf['version'] = '1.0'
 
-        for attr in WORKFLOW_UNSUPPORTED_ATTRIBUTES:
-            if attr in mistral_wf:
-                raise NotImplementedError(("Workflow contains an attribute '{}' that is not"
-                                           " supported in orquesta.").format(attr))
+        if force:
+            for attr in WORKFLOW_UNSUPPORTED_ATTRIBUTES:
+                val = mistral_wf.get(attr)
+                if val:
+                    orquesta_wf[attr] = val
+        else:
+            for attr in WORKFLOW_UNSUPPORTED_ATTRIBUTES:
+                if attr in mistral_wf:
+                    raise NotImplementedError(("Workflow contains an attribute '{}' that is not"
+                                               " supported in orquesta.").format(attr))
 
         if mistral_wf.get('description'):
             orquesta_wf['description'] = mistral_wf['description']
@@ -297,7 +307,7 @@ class WorkflowConverter(object):
             orquesta_wf['output'] = self.dict_to_list(output)
 
         if mistral_wf.get('tasks'):
-            o_tasks = self.convert_tasks(mistral_wf['tasks'], expr_converter)
+            o_tasks = self.convert_tasks(mistral_wf['tasks'], expr_converter, force=force)
             if o_tasks:
                 orquesta_wf['tasks'] = o_tasks
 

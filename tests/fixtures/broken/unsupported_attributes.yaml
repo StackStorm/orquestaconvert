@@ -1,0 +1,13 @@
+---
+version: '1.0'
+output-on-error:
+  error: Error condition
+input:
+  - items:
+      - foo
+      - bar
+tasks:
+  random_task:
+    concurrency: 4
+    with-items: i in <% $.items %>
+    action: core.noop

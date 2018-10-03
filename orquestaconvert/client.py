@@ -19,6 +19,8 @@ class Client(object):
                             default='jinja',
                             help=('Type of expressions to use when inserting new expressions'
                                   ' (things like task transitions in the "when" clause.'))
+        parser.add_argument('--force', default=False, action='store_true',
+                            help='Include unsupported attributes in the generated outputs')
         parser.add_argument('filename', metavar='FILENAME', nargs=1,
                             help='Path to the Mistral Workflow YAML file to convert')
         return parser
@@ -39,21 +41,23 @@ class Client(object):
         # convert Mistral -> Orquesta
         mistral_wf = mistral_wf_data_ruamel[mistral_wf_spec.name]
         workflow_converter = WorkflowConverter()
-        orquesta_wf_data_ruamel = workflow_converter.convert(mistral_wf, expr_type)
+        orquesta_wf_data_ruamel = workflow_converter.convert(mistral_wf, expr_type,
+                                                             force=self.args.force)
         orquesta_wf_data_str = yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
         orquesta_wf_data = yaml_utils.yaml_to_obj(orquesta_wf_data_str)
 
         # validate we've generated a proper Orquesta workflow
         orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
-        self.validate_workflow_spec(orquesta_wf_spec)
+        if not self.args.force:
+            self.validate_workflow_spec(orquesta_wf_spec)
 
         # write out the new Orquesta workflow to a YAML string
         return yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
 
     def run(self, argv):
-        args = self.parser().parse_args(argv)
-        expr_type = args.expressions
-        for f in args.filename:
+        self.args = self.parser().parse_args(argv)
+        expr_type = self.args.expressions
+        for f in self.args.filename:
             sys.stdout.write(self.convert_file(f, expr_type))
         return 0
 

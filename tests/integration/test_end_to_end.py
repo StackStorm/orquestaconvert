@@ -10,10 +10,12 @@ class TestEndToEnd(BaseTestCase):
         super(TestEndToEnd, self).setUp()
         self.client = Client()
 
-    def e2e_from_file(self, wf_filename):
-        fixture_path = self.get_fixture_path('mistral/' + wf_filename)
+    def e2e_from_file(self, m_wf_filename, o_wf_filename=None):
+        if o_wf_filename is None:
+            o_wf_filename = m_wf_filename
+        fixture_path = self.get_fixture_path('mistral/' + m_wf_filename)
         result = self.client.convert_file(fixture_path)
-        expected = self.get_fixture_content('orquesta/' + wf_filename)
+        expected = self.get_fixture_content('orquesta/' + o_wf_filename)
         self.assertMultiLineEqual(result, expected)
 
     def test_e2e_nasa_apod_twitter_post(self):

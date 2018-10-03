@@ -9,6 +9,9 @@ class TestEndToEnd(BaseTestCase):
     def setUp(self):
         super(TestEndToEnd, self).setUp()
         self.client = Client()
+        parser = self.client.parser()
+        # Ensure that the client has an args attribute
+        self.client.args = parser.parse_args(['file.yaml'])
 
     def e2e_from_file(self, m_wf_filename, o_wf_filename=None):
         if o_wf_filename is None:
@@ -17,6 +20,12 @@ class TestEndToEnd(BaseTestCase):
         result = self.client.convert_file(fixture_path)
         expected = self.get_fixture_content('orquesta/' + o_wf_filename)
         self.assertMultiLineEqual(result, expected)
+
+    def test_e2e_force_option(self):
+        parser = self.client.parser()
+        self.client.args = parser.parse_args(['--force', 'file.yaml'])
+        self.e2e_from_file('unsupported_attributes.yaml',
+                           '../broken/unsupported_attributes.yaml')
 
     def test_e2e_nasa_apod_twitter_post(self):
         self.e2e_from_file('nasa_apod_twitter_post.yaml')

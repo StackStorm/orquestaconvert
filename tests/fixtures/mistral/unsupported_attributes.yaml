@@ -1,0 +1,15 @@
+---
+version: '2.0'
+
+circleci.test_with_items:
+  input:
+    - items:
+      - foo
+      - bar
+  output-on-error:
+    error: Error condition
+  tasks:
+    random_task:
+      with-items: i in <% $.items %>
+      concurrency: 4
+      action: core.noop

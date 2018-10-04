@@ -1,0 +1,22 @@
+---
+version: '2.0'
+
+st2cicd.int_publish_parameters:
+  type: direct
+  tasks:
+    random_task_one:
+      action: core.noop
+      publish:
+        continue: 0
+      on-success:
+        - publish_one_hundred
+    publish_one_hundred:
+      action: core.noop
+      publish:
+        continue: 100
+      on-success:
+        - publish_negative_one
+    publish_negative_one:
+      action: core.noop
+      publish:
+        continue: -1

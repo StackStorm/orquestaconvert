@@ -8,6 +8,7 @@ class TestEndToEnd(BaseTestCase):
 
     def setUp(self):
         super(TestEndToEnd, self).setUp()
+        self.maxDiff = 20000
         self.client = Client()
         parser = self.client.parser()
         # Ensure that the client has an args attribute
@@ -39,3 +40,12 @@ class TestEndToEnd(BaseTestCase):
 
     def test_e2e_transition_strings_test(self):
         self.e2e_from_file('transition_strings.yaml')
+
+    def test_e2e_boolean_publish_parameters(self):
+        self.e2e_from_file('boolean_publish_parameters.yaml')
+
+    def test_e2e_null_publish_parameters(self):
+        self.e2e_from_file('null_publish_parameters.yaml')
+
+    def test_e2e_int_publish_parameters(self):
+        self.e2e_from_file('int_publish_parameters.yaml')

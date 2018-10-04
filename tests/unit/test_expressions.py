@@ -1,3 +1,5 @@
+import re
+
 from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions import ExpressionConverter
@@ -7,6 +9,39 @@ from orquestaconvert.expressions.yaql import YaqlExpressionConverter
 
 class TestExpressions(BaseTestCase):
     __test__ = True
+
+    def test_convert_expr_bool(self):
+        expr_bool = True
+        result = ExpressionConverter.convert(expr_bool)
+        self.assertEquals(result, True)
+        expr_bool = False
+        result = ExpressionConverter.convert(expr_bool)
+        self.assertEquals(result, False)
+
+    def test_convert_expr_null(self):
+        expr_none = None
+        result = ExpressionConverter.convert(expr_none)
+        self.assertEquals(result, None)
+
+    def test_convert_expr_int(self):
+        expr_int = 0
+        result = ExpressionConverter.convert(expr_int)
+        self.assertEquals(result, 0)
+        expr_int = 100
+        result = ExpressionConverter.convert(expr_int)
+        self.assertEquals(result, 100)
+        expr_int = -1
+        result = ExpressionConverter.convert(expr_int)
+        self.assertEquals(result, -1)
+
+    def test_convert_expr_obj_with_warning(self):
+        expr_obj = object()
+        expected_warning_regex = re.compile(
+            r"Could not recognize expression '<object object at 0x[0-9a-f]+>'; "
+            r"results may not be accurate.")
+        with self.assertWarnsRegex(SyntaxWarning, expected_warning_regex):
+            result = ExpressionConverter.convert(expr_obj)
+        self.assertEquals(result, expr_obj)
 
     def test_convert_expr_dict(self):
         expr_dict = {"test": "{{ _.value }}"}

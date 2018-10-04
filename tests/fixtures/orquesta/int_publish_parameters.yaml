@@ -1,0 +1,25 @@
+---
+version: '1.0'
+tasks:
+  random_task_one:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        publish:
+          - continue: 0
+        do:
+          - publish_one_hundred
+  publish_one_hundred:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        publish:
+          - continue: 100
+        do:
+          - publish_negative_one
+  publish_negative_one:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        publish:
+          - continue: -1

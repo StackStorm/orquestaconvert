@@ -1,0 +1,19 @@
+---
+version: '2.0'
+
+st2cicd.boolean_publish_parameters:
+  type: direct
+  tasks:
+    random_task_one:
+      action: core.noop
+      on-success:
+        - publish_continue
+        - publish_stop
+    publish_continue:
+      action: core.noop
+      publish:
+        continue: true
+    publish_stop:
+      action: core.noop
+      publish:
+        continue: false

@@ -1,0 +1,15 @@
+---
+version: '1.0'
+tasks:
+  random_task_one:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - publish_nothing
+  publish_nothing:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        publish:
+          - continue:

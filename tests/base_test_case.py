@@ -2,11 +2,11 @@ import json
 import os
 import six
 import sys
-import unittest
+import unittest2
 import yaml
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase(unittest2.TestCase):
     __test__ = False
 
     def get_fixture_content(self, filename):

@@ -1,0 +1,14 @@
+---
+version: '2.0'
+
+st2cicd.null_publish_parameters:
+  type: direct
+  tasks:
+    random_task_one:
+      action: core.noop
+      on-success:
+        - publish_nothing
+    publish_nothing:
+      action: core.noop
+      publish:
+        continue: null

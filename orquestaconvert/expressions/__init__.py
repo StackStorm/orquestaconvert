@@ -1,5 +1,6 @@
 import ruamel.yaml.comments
 import six
+import warnings
 import orquesta.expressions.base
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
@@ -17,6 +18,31 @@ class ExpressionConverter(object):
             return cls.convert_list(expr)
         elif isinstance(expr, six.string_types):
             return cls.convert_string(expr)
+        elif isinstance(expr, bool):
+            return expr
+        elif expr is None:
+            # Note: The only point to explicitly converting None is to skip
+            #       emitting the warning. Otherwise we would remove this elif
+            #       and let the function return the input. Also, ruamel doesn't
+            #       explicitly serialize null to None, it just leaves the key
+            #       blank (in other words, it "implicitly" serializes it).
+            #       Example:
+            #
+            #           next:
+            #             - when: ...
+            #               publish:
+            #                 - continue:
+            #               ...
+            #
+            #       See this link for more information:
+            #       https://bitbucket.org/ruamel/yaml/issues/169/roundtripdumper-dumps-null-values
+            return None
+        elif isinstance(expr, int):
+            return expr
+        else:
+            warnings.warn("Could not recognize expression '{}'; results may not "
+                          "be accurate.".format(expr), SyntaxWarning)
+            return expr
 
     @classmethod
     def expression_type(cls, expr):

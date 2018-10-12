@@ -217,6 +217,19 @@ update-orquesta-requirements: virtualenv
 	fi;
 
 
+.PHONY: .test-test-coverage-html
+.test-test-coverage-html:
+	@echo
+	@echo "================== test-test-coverage-html =================="
+	@echo
+	. $(VIRTUALENV_DIR)/bin/activate; \
+	if [ -d "$(PYMODULE_TESTS_DIR)" ]; then \
+		nosetests $(NOSE_OPTS),tests --cover-tests --cover-html $(PYMODULE_TESTS_DIR) || exit 1; \
+	else \
+		echo "Tests directory not found: $(PYMODULE_TESTS_DIR)";\
+	fi;
+
+
 .PHONY: .test-coveralls
 .test-coveralls:
 	@echo

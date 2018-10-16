@@ -21,6 +21,8 @@ class Client(object):
                                   ' (things like task transitions in the "when" clause.'))
         parser.add_argument('--force', default=False, action='store_true',
                             help='Include unsupported attributes in the generated outputs')
+        parser.add_argument('--validate', default=False, action='store_true',
+                            help='Validate the Orquesta workflow')
         parser.add_argument('filename', metavar='FILENAME', nargs=1,
                             help='Path to the Mistral Workflow YAML file to convert')
         return parser
@@ -54,12 +56,24 @@ class Client(object):
         # write out the new Orquesta workflow to a YAML string
         return yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
 
+    def validate_file(self, filename):
+        # parse the Orquesta workflow from file
+        orquesta_wf_data, orquesta_wf_data_ruamel = yaml_utils.read_yaml(filename)
+
+        # validate the Orquesta workflow
+        orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
+        self.validate_workflow_spec(orquesta_wf_spec)
+
     def run(self, argv, output_stream):
         # Write the file to the output_stream
         self.args = self.parser().parse_args(argv)
         expr_type = self.args.expressions
-        for f in self.args.filename:
-            output_stream.write(self.convert_file(f, expr_type))
+        if self.args.validate:
+            for f in self.args.filename:
+                self.validate_file(f)
+        else:
+            for f in self.args.filename:
+                output_stream.write(self.convert_file(f, expr_type))
         return 0
 
 

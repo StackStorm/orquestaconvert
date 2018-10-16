@@ -14,6 +14,8 @@ class Client(object):
 
     def parser(self):
         parser = argparse.ArgumentParser(description='Convert Mistral workflows to Orquesta')
+        parser.add_argument('-v', '--verbose', default=False, action='store_true',
+                            help='Print success message when validating, otherwise ignored')
         parser.add_argument('-e', '--expressions',
                             choices=['jinja', 'yaql'],
                             default='jinja',
@@ -63,6 +65,9 @@ class Client(object):
         # validate the Orquesta workflow
         orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
         self.validate_workflow_spec(orquesta_wf_spec)
+
+        if self.args.verbose:
+            print("Successfully validated workflow from {}".format(filename))
 
     def run(self, argv, output_stream):
         # Write the file to the output_stream

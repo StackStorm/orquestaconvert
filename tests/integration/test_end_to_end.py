@@ -49,3 +49,6 @@ class TestEndToEnd(BaseTestCase):
 
     def test_e2e_int_publish_parameters(self):
         self.e2e_from_file('int_publish_parameters.yaml')
+
+    def test_e2e_convert_dashes_in_task_names_to_underscores(self):
+        self.e2e_from_file('dashes_in_task_names.yaml')

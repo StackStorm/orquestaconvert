@@ -1,0 +1,16 @@
+---
+version: '2.0'
+
+circleci.test_dashes_in_task_names:
+  tasks:
+    odd-job:
+      action: core.noop
+      on-success:
+        - random-task
+        - weird-todo: "{{ _.jinja_expr }}"
+
+    random-task:
+      action: core.noop
+
+    weird-todo:
+      action: core.noop

@@ -1,0 +1,16 @@
+---
+version: '1.0'
+tasks:
+  odd_job:
+    action: core.noop
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - random_task
+      - when: '{{ succeeded() and (ctx().jinja_expr) }}'
+        do:
+          - weird_todo
+  random_task:
+    action: core.noop
+  weird_todo:
+    action: core.noop

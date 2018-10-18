@@ -5,6 +5,7 @@ from orquestaconvert.expressions import ExpressionConverter
 from orquestaconvert.expressions.base import BaseExpressionConverter
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
+from orquestaconvert.utils import task_utils
 from orquestaconvert.utils import type_utils
 
 WORKFLOW_TYPES = [
@@ -152,6 +153,13 @@ class WorkflowConverter(object):
         transitions['on-complete']['orquesta_expr'] = None
         return transitions
 
+    def normalize_transition_task_names(self, o_task_spec):
+        for i, transition in enumerate(o_task_spec['next']):
+            if 'do' in o_task_spec['next'][i]:
+                new_dos = [task_utils.translate_task_name(tname) for tname in transition['do']]
+                o_task_spec['next'][i]['do'] = new_dos
+        return o_task_spec
+
     def convert_task_transitions(self, m_task_spec, expr_converter):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
@@ -219,6 +227,8 @@ class WorkflowConverter(object):
                                                                   data['orquesta_expr'])
             o_task_spec['next'].extend(o_trans_expr_list)
 
+        o_task_spec = self.normalize_transition_task_names(o_task_spec)
+
         return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
     def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
@@ -249,7 +259,7 @@ class WorkflowConverter(object):
             o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter)
             o_task_spec.update(o_task_transitions)
 
-            orquesta_wf_tasks[task_name] = o_task_spec
+            orquesta_wf_tasks[task_utils.translate_task_name(task_name)] = o_task_spec
 
         return orquesta_wf_tasks
 

@@ -58,6 +58,13 @@ endif
 VIRTUALENV_DIR ?= $(ROOT_DIR)/virtualenv
 ORQUESTA_DIR ?= $(VIRTUALENV_DIR)/orquesta
 
+VIRTUALENV_FLAGS := --no-site-packages
+# https://stackoverflow.com/a/22105036/1134951
+PYV=$(shell python -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)");
+ifneq ($(PYV),2.7)
+    VIRTUALENV_FLAGS += -p python2.7
+endif
+
 
 # Run all targets
 .PHONY: all
@@ -112,7 +119,7 @@ list:
 virtualenv: $(VIRTUALENV_DIR)/bin/activate
 $(VIRTUALENV_DIR)/bin/activate:
 	@echo "==================== virtualenv ===================="
-	test -d $(VIRTUALENV_DIR) || virtualenv --no-site-packages $(VIRTUALENV_DIR)
+	test -d $(VIRTUALENV_DIR) || virtualenv $(VIRTUALENV_FLAGS) $(VIRTUALENV_DIR)
 # Setup PYTHONPATH in bash activate script...
 # Delete existing entries (if any)
 	sed $(SED_INPLACE_FLAGS) '/_OLD_PYTHONPATHp/d' $(VIRTUALENV_DIR)/bin/activate

@@ -28,8 +28,6 @@ TMP_EXTENSION = 'orquesta.temp.yaml'
 class PackClient(object):
     def parser(self):
         parser = argparse.ArgumentParser(description='Convert all Mistral workflows in a pack')
-        parser.add_argument('--validate', default=False, action='store_true',
-                            help='Validate the Orquesta workflow')
         parser.add_argument('--list-workflows', dest='workflow_type', type=str,
                             help='List Mistral workflows in the pack and exit')
         parser.add_argument('--actions-dir', dest='actions_directory', default=None, type=str,
@@ -62,17 +60,6 @@ class PackClient(object):
             for action, workflow in self.get_workflow_files(wf_type, directory).items():
                 sys.stdout.write("{} --> {}\n".format(action, workflow))
             return 0
-
-        if self.args.validate:
-            args.append('--validate')
-            filenames = self.get_workflow_files('orquesta').values()
-
-            total = 0
-            for f in filenames:
-                fargs = list(args)
-                fargs.append(f)
-                total += client.run(fargs, sys.stdout)
-            return total
 
         filenames = self.get_workflow_files('mistral-v2', self.args.actions_directory)
 

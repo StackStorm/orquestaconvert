@@ -105,18 +105,3 @@ class PackClientRunTestCase(BaseCLITestCase):
         self.assertEqual(actual, expected)
 
         self._validate_dirs(m_actions_dir, o_actions_dir)
-
-    def test_validate_partially_converted_pack(self):
-        self.test_partially_convert_pack()
-
-        self.setup_captures()
-
-        result = self.pack_client.run(['--validate', '--verbose', '--actions-dir={}'.format(m_actions_dir)],
-                                      client=self.client)
-
-        self.assertEqual(self.stdout.getvalue(), '')
-        self.assertEqual(self.stderr.getvalue(), '')
-
-        self.assertEqual(result, 0)
-
-        self._validate_dirs(m_actions_dir, o_actions_dir)

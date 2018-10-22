@@ -111,19 +111,6 @@ class PackClientTestCase(BaseCLITestCase):
 
         self.assertEqual(self.client.run.call_count, 0)
 
-    def test_validate_nothing(self):
-        result = self.pack_client.run(['--validate', '--actions-dir={}'.format(o_actions_dir)],
-                                      client=self.client)
-
-        self.assertEqual(self.stdout.getvalue(), '')
-        self.assertEqual(self.stderr.getvalue(), '')
-
-        self.assertEqual(result, 0)
-
-        self.assertEqual(self.client.run.call_count, 0)
-
-        self._validate_dirs(p_actions_dir, m_actions_dir)
-
     def test_convert_pack(self):
         args = ['-e', 'yaql', '--actions-dir={}'.format(m_actions_dir)]
         result = self.pack_client.run(args, client=self.client)

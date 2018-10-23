@@ -6,14 +6,58 @@ Converts Mistral workflows into Orquesta workflows
 
 # Usage
 
-The script takes a single argument, which is the name of the Mistral workflow
-YAML file to convert.
+## `orquestaconvert.sh` - convert a single workflow and print to stdout
 
-We've made a shell script that sets up a `virtualenv` (if it doesn't exist) that contains
-all dependencies necessary to run the code!
+The script automatically sets up a `virtualenv` (if it doesn't exist) that contains all of the necessary depedencies to run.
 
-``` shell
+You must specify one or more workflow YAML files to convert as the last arguments to the script.
+
+There are also some options you can use:
+
+- `-e <type>` - Type of expressions (YAQL or Jinja) to use when inserting new expressions (such as task transitions in the `when` clause)
+- `--force` - Forces the script to convert and print the workflow even if it does not successfully validate against the Orquesta YAML schema.
+
+### Examples
+
+```shell
 ./bin/orquestaconvert.sh ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
+```
+
+```shell
+./bin/orquestaconvert.sh -e yaql ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
+```
+
+```shell
+./bin/orquestaconvert.sh --force ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
+```
+
+## `orquestaconvert-pack.sh` - convert all Mistral workflows in a pack
+
+This script scans a directory for all action metadata files and attempts to convert all Mistral workflows to (and metadata files) to Orquesta.
+
+The script also automatically sets up (if it doesn't exist) and uses the `virtualenv` that contains all necessary depedencies to run.
+
+You must either run this command from the base directory of a pack or you must specify the directory that contains action metadata files with the `--actions-dir` option.
+
+Other options are:
+
+- `--list-workflows <type>` - List all workflows of the specified type (must either be `action-chain` for ActionChain, `mistral-v2` for Mistral, or `orquesta` or `orchestra` for Orquesta workflows)
+- `--actions-dir <dir>` - Specifies the directory to scan and convert
+
+All unrecognized options are passed directly to the `orquestaconvert.sh` command.
+
+### Examples
+
+```shell
+./bin/orquestaconvert-pack.sh
+```
+
+```shell
+./bin/orquestaconvert-pack.sh --list-workflows mistral-v2
+```
+
+```shell
+./bin/orquestaconvert-pack.sh --expressions yaql --actions-dir mypack/actions
 ```
 
 # Features

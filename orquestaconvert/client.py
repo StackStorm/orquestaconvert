@@ -54,13 +54,15 @@ class Client(object):
         # write out the new Orquesta workflow to a YAML string
         return yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
 
-    def run(self, argv):
+    def run(self, argv, output_stream):
+        # Write the file to the output_stream
         self.args = self.parser().parse_args(argv)
         expr_type = self.args.expressions
         for f in self.args.filename:
-            sys.stdout.write(self.convert_file(f, expr_type))
+            output_stream.write(self.convert_file(f, expr_type))
         return 0
 
 
 if __name__ == '__main__':
-    sys.exit(Client().run(sys.argv[1:]))
+    # Write the converted workflow to stdout
+    sys.exit(Client().run(sys.argv[1:], sys.stdout))

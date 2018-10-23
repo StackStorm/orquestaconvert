@@ -1,0 +1,14 @@
+---
+name: mistral-test-cancel
+description: A sample workflow used to test the cancel feature.
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-test-cancel.yaml
+enabled: true
+parameters:
+    tempfile:
+        type: string
+        required: true
+    message:
+        type: string
+        required: true

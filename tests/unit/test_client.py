@@ -11,13 +11,14 @@ class TestClient(BaseCLITestCase):
     def setUp(self):
         super(TestClient, self).setUp()
         self.client = Client()
+        self.maxDiff = 20000
 
     def _validate_args(self, args, filename, expected_filename=None):
         # path to fixture file
         fixture_path = self.get_fixture_path('mistral/' + filename)
 
         # run
-        exit_status = Client().run(args + [fixture_path])
+        exit_status = Client().run(args + [fixture_path], self.stdout)
         self.assertEquals(exit_status, 0)
 
         # read expected data

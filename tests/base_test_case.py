@@ -42,9 +42,7 @@ class BaseCLITestCase(BaseTestCase):
     stdout = six.moves.StringIO()
     stderr = six.moves.StringIO()
 
-    def setUp(self):
-        super(BaseCLITestCase, self).setUp()
-
+    def setup_captures(self):
         if self.capture_output:
             # Make sure we reset it for each test class instance
             self.stdout = six.moves.StringIO()
@@ -53,10 +51,16 @@ class BaseCLITestCase(BaseTestCase):
             sys.stdout = self.stdout
             sys.stderr = self.stderr
 
-    def tearDown(self):
-        super(BaseCLITestCase, self).tearDown()
-
+    def reset_captures(self):
         if self.capture_output:
             # Reset to original stdout and stderr.
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
+
+    def setUp(self):
+        super(BaseCLITestCase, self).setUp()
+        self.setup_captures()
+
+    def tearDown(self):
+        super(BaseCLITestCase, self).tearDown()
+        self.reset_captures()

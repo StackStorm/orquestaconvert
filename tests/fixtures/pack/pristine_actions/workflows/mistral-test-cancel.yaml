@@ -17,6 +17,6 @@ examples.mistral-test-cancel:
             on-success:
                 - task2
         task2:
-            action: core.local
+            action: std.noop
             input:
                 cmd: echo "{{ $.var1 }}"

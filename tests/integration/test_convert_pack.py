@@ -16,11 +16,9 @@ m_actions_dir = os.path.join('tests', 'fixtures', 'pack', 'actions')
 o_actions_dir = os.path.join('tests', 'fixtures', 'pack', 'o_actions')
 
 
-class PackClientRunTestCase(BaseCLITestCase):
-    __test__ = True
-
+class BasePackClientRunTestCase(BaseCLITestCase):
     def setUp(self):
-        super(PackClientRunTestCase, self).setUp()
+        super(BasePackClientRunTestCase, self).setUp()
 
         self.client = Client()
         self.pack_client = PackClient()
@@ -32,7 +30,7 @@ class PackClientRunTestCase(BaseCLITestCase):
         shutil.copytree(p_actions_dir, m_actions_dir)
 
     def tearDown(self):
-        super(PackClientRunTestCase, self).tearDown()
+        super(BasePackClientRunTestCase, self).tearDown()
 
         if os.path.isdir(m_actions_dir):
             shutil.rmtree(m_actions_dir)
@@ -46,6 +44,10 @@ class PackClientRunTestCase(BaseCLITestCase):
             with open(os.path.join(directory, dirf), 'r') as f:
                 dirhash[dirf] = hashlib.sha256(f.read()).hexdigest()
         return dirhash
+
+
+class PackClientRunTestCase(BasePackClientRunTestCase):
+    __test__ = True
 
     def _validate_dirs(self, dir1, dir2):
         '''Make sure the directories are the same'''

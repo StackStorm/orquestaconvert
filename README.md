@@ -82,6 +82,7 @@ Explicitly rints the validation results for all Orquesta workflows.
 * For each task, `action`, `input`, `publish`, `on-success`, `on-error`, and `on-complete` are all converted
 * Converts _simple_ Jinja and YAQL expressions
 * Converts `task()`, `st2kv`, `_.xxx` / `$.xxx`, etc in Jinja and YAQL expressions
+* Converts `with-items` and `concurrency` attributes
 
 # Limitations
 
@@ -92,7 +93,6 @@ Explicitly rints the validation results for all Orquesta workflows.
 * Does not convert `task('xxx')` references to non-local tasks, the current task is always assumed.
 * Does not convert workflows with an `output-on-error` stanza
 * Does not convert workflows if the tasks contain one or more of the following attributes
-    * `concurrency`
     * `keep-result`
     * `pause-before`
     * `retry`
@@ -101,5 +101,4 @@ Explicitly rints the validation results for all Orquesta workflows.
     * `timeout`
     * `wait-after`
     * `wait-before`
-    * `with-items`
     * `workflow`

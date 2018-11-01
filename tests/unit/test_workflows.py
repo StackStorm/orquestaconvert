@@ -380,6 +380,37 @@ class TestWorkflows(BaseTestCase):
             ]))
         ])
 
+    def test_convert_action_unsupported_mistral_builtin_actions(self):
+        converter = WorkflowConverter()
+
+        with self.assertRaises(NotImplementedError):
+            converter.convert_action('std.echo')
+        with self.assertRaises(NotImplementedError):
+            converter.convert_action('std.email')
+        with self.assertRaises(NotImplementedError):
+            converter.convert_action('std.javascript')
+        with self.assertRaises(NotImplementedError):
+            converter.convert_action('std.js')
+        with self.assertRaises(NotImplementedError):
+            converter.convert_action('std.ssh')
+
+    def test_convert_action_mistral_builtin_actions(self):
+        converter = WorkflowConverter()
+
+        self.assertEqual(converter.convert_action('std.fail'), 'fail')
+        self.assertEqual(converter.convert_action('std.http'), 'core.http')
+        self.assertEqual(converter.convert_action('std.mistral_http'), 'core.http')
+        self.assertEqual(converter.convert_action('std.noop'), 'core.noop')
+
+    def test_convert_action_others(self):
+        converter = WorkflowConverter()
+
+        # Test non-built-in actions
+        self.assertEqual(converter.convert_action('basil.exposition'), 'basil.exposition')
+        self.assertEqual(converter.convert_action('vanessakensington'), 'vanessakensington')
+        self.assertEqual(converter.convert_action('foxxy_cleopatra'), 'foxxy_cleopatra')
+        self.assertEqual(converter.convert_action('number 3'), 'number 3')
+
     def test_convert_tasks_unsupported_attributes(self):
         converter = WorkflowConverter()
         expr_converter = YaqlExpressionConverter()

@@ -30,6 +30,21 @@ TASK_UNSUPPORTED_ATTRIBUTES = [
     'workflow',
 ]
 
+UNSUPPORTED_MISTRAL_ACTIONS = [
+    'std.echo',
+    'std.email',
+    'std.javascript',
+    'std.js',
+    'std.ssh',
+]
+
+MISTRAL_ACTION_CONVERSION_TABLE = {
+    'std.fail': 'fail',
+    'std.http': 'core.http',
+    'std.mistral_http': 'core.http',
+    'std.noop': 'core.noop',
+}
+
 
 class WorkflowConverter(object):
 
@@ -231,6 +246,13 @@ class WorkflowConverter(object):
 
         return o_task_spec if o_task_spec['next'] else ruamel.yaml.comments.CommentedMap()
 
+    def convert_action(self, m_action):
+        if m_action in UNSUPPORTED_MISTRAL_ACTIONS:
+            raise NotImplementedError(("Action '{}' is not supported in orquesta.").
+                                      format(m_action))
+
+        return MISTRAL_ACTION_CONVERSION_TABLE.get(m_action, m_action)
+
     def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
@@ -248,7 +270,7 @@ class WorkflowConverter(object):
                                                   format(task_name, attr))
 
             if m_task_spec.get('action'):
-                o_task_spec['action'] = m_task_spec['action']
+                o_task_spec['action'] = self.convert_action(m_task_spec['action'])
 
             if m_task_spec.get('join'):
                 o_task_spec['join'] = m_task_spec['join']

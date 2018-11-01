@@ -17,6 +17,6 @@ tasks:
         do:
           - task2
   task2:
-    action: core.local
+    action: core.noop
     input:
       cmd: echo "{{ $.var1 }}"

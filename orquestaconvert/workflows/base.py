@@ -1,5 +1,7 @@
-import ruamel.yaml
+import re
 import six
+
+import ruamel.yaml
 
 from orquestaconvert.expressions import ExpressionConverter
 from orquestaconvert.expressions.base import BaseExpressionConverter
@@ -17,7 +19,6 @@ WORKFLOW_UNSUPPORTED_ATTRIBUTES = [
 ]
 
 TASK_UNSUPPORTED_ATTRIBUTES = [
-    'concurrency',
     'keep-result',
     'pause-before',
     'retry',
@@ -26,7 +27,6 @@ TASK_UNSUPPORTED_ATTRIBUTES = [
     'timeout',
     'wait-after',
     'wait-before',
-    'with-items',
     'workflow',
 ]
 
@@ -44,6 +44,9 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
     'std.mistral_http': 'core.http',
     'std.noop': 'core.noop',
 }
+
+
+EXPR_RGX = re.compile(r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$')
 
 
 class WorkflowConverter(object):
@@ -253,6 +256,79 @@ class WorkflowConverter(object):
 
         return MISTRAL_ACTION_CONVERSION_TABLE.get(m_action, m_action)
 
+    def convert_with_items_expr(self, expression, expr_converter):
+        # Convert all with-items attributes
+        #
+        # with-items:
+        #   - i in <% $.yaql_data %>
+        #
+        # with-items:
+        #   - i in <% $.yaql_data %>
+        #   - j in <% $.more_data %>
+        #   - k in <% $.all_the_data %>
+        #
+        # with-items: i in <% $.yaql_data %>
+        # concurrency: 2
+        #
+        # with-items: i in {{ _.jinja_data }}
+        #
+        # with-items: i in [0, 1, 2, 3]
+        #
+        # should produce the following in orquesta
+        #
+        # with:
+        #   items: i in <% ctx().yaql_data %>
+        #
+        # with:
+        #   items: i, j, k in <% zip($.yaql_data, $.more_data, $.all_the_data) %>
+        #
+        # with:
+        #   items: i in <% $.yaql_data %>
+        #   concurrency: 2
+        #
+        # with:
+        #   items: i in {{ ctx().jinja_data }}
+        #
+        # with:
+        #   items: i in <% [0, 1, 2, 3] %>
+        if isinstance(expression, list):
+            converter = None
+            var_list = []
+            expr_list = []
+            for expr_item in expression:
+                m = EXPR_RGX.match(expr_item)
+                if m:
+                    var = m.group('var')
+                    expr = m.group('expr')
+                    converter = ExpressionConverter.get_converter(expr)
+                    expr = ExpressionConverter.unwrap_expression(expr)
+                    expr = ExpressionConverter.convert_string(expr)
+                    var_list.append(var)
+                    expr_list.append(expr)
+                else:
+                    raise NotImplementedError("Unrecognized with-items expression: '{}' (in list)".
+                                              format(expr_item))
+
+            zip_expression = 'zip({expr})'.format(expr=', '.join(expr_list))
+
+            converter = converter if converter else expr_converter
+
+            return "{vars} in {wrapped_expr}".format(
+                vars=', '.join(var_list),
+                wrapped_expr=converter.wrap_expression(zip_expression))
+        else:
+            m = EXPR_RGX.match(expression)
+            if m:
+                var = m.group('var')
+                expr = m.group('expr')
+                converter = ExpressionConverter.get_converter(expr)
+                expr = ExpressionConverter.unwrap_expression(expr)
+                expr = ExpressionConverter.convert_string(expr)
+                converter = converter if converter else expr_converter
+                expr = converter.wrap_expression(expr)
+                return "{var} in {expr}".format(var=var, expr=expr)
+        return expression
+
     def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
@@ -268,6 +344,19 @@ class WorkflowConverter(object):
                         raise NotImplementedError(("Task '{}' contains an attribute '{}'"
                                                    " that is not supported in orquesta.").
                                                   format(task_name, attr))
+
+            if m_task_spec.get('with-items'):
+                with_attr = {}
+                with_items_expr = self.convert_with_items_expr(m_task_spec['with-items'],
+                                                               expr_converter)
+                if m_task_spec.get('concurrency'):
+                    with_attr = {
+                        'items': with_items_expr,
+                        'concurrency': m_task_spec['concurrency'],
+                    }
+                else:
+                    with_attr['items'] = with_items_expr
+                o_task_spec['with'] = with_attr
 
             if m_task_spec.get('action'):
                 o_task_spec['action'] = self.convert_action(m_task_spec['action'])

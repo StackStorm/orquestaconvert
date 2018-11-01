@@ -1,0 +1,13 @@
+---
+description: Run several linux commands in a single task.
+enabled: true
+entry_point: workflows/mistral-with-items-yaql.yaml
+name: mistral-with-items-yaql
+pack: examples
+parameters:
+  yaql_cmds:
+    items:
+      type: string
+    minItems: 1
+    type: array
+runner_type: mistral-v2

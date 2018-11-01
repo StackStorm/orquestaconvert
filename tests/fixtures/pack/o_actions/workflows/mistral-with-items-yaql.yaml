@@ -1,0 +1,16 @@
+---
+version: '1.0'
+description: >
+  A sample workflow that demonstrates how to repeat a task
+  multiple times with different inputs.
+input:
+  - yaql_cmds
+tasks:
+  repeat:
+    with:
+      items: cmd in <% $.yaql_cmds %>
+    action: core.local cmd=<% $.cmd %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - result: <% result().select(ctx().stdout) %>

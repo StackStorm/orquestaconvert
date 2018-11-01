@@ -1,0 +1,13 @@
+---
+description: Mistral's with-items with a YAML list
+enabled: true
+entry_point: workflows/mistral-with-items-yaml-list.yaml
+name: mistral-with-items-list
+pack: examples
+parameters:
+  cmds:
+    items:
+      type: string
+    minItems: 1
+    type: array
+runner_type: orquesta

@@ -1,0 +1,18 @@
+---
+version: '1.0'
+description: >
+  A sample workflow that demonstrates how to repeat a task
+  multiple times with different inputs.
+input:
+  - jinja_cmds
+tasks:
+  repeat:
+    with:
+      items: cmd in {{ _.jinja_cmds }}
+    action: core.local
+    input:
+      cmd: '{{ ctx().cmd }}'
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - result: "{{ result() | map(attribute='stdout') | list }}"

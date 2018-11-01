@@ -1,16 +1,15 @@
 version: '2.0'
 
-examples.mistral-repeat:
+examples.mistral-with-items-yaql:
     description: >
         A sample workflow that demonstrates how to repeat a task
-        x number of times with the same inputs.
+        multiple times with different inputs.
     type: direct
     input:
-        - cmd
-        - count
+        - yaql_cmds
     tasks:
         repeat:
-            with-items: i in <% list(range(0, $.count)) %>
+            with-items: cmd in <% $.yaql_cmds %>
             action: core.local cmd=<% $.cmd %>
             publish:
                 result: <% task(repeat).result.select($.stdout) %>

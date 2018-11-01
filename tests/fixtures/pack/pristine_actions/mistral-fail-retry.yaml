@@ -1,0 +1,14 @@
+---
+name: mistral-fail-retry
+description: A sample workflow used to test the cancel feature.
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-fail-retry.yaml
+enabled: true
+parameters:
+    tempfile:
+        type: string
+        required: true
+    message:
+        type: string
+        required: true

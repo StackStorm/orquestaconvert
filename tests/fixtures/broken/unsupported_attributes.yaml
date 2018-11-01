@@ -8,6 +8,10 @@ input:
       - bar
 tasks:
   random_task:
-    concurrency: 4
-    with-items: i in <% $.items %>
+    retry:
+      delay: 4
+      count: 15
+    with:
+      items: i in <% $.items %>
+      concurrency: 4
     action: core.noop

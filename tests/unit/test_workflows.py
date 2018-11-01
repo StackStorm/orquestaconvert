@@ -295,6 +295,53 @@ class TestWorkflows(BaseTestCase):
         result = converter.convert_task_transitions(task_spec, expr_converter)
         self.assertEquals(result, OrderedMap([]))
 
+    def test_convert_with_items_expr_list(self):
+        wi_list = [
+            'a in <% [0, 1, 2] %>',
+            'b in [3, 4, 5]',
+            'c in <% $.all_the_things %>',
+        ]
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+        expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], $.all_the_things) %>"
+        self.assertEquals(actual, expected)
+
+    def test_convert_with_items_expr_list_unrecognized_expression(self):
+        wi_list = [
+            'a in <% [0, 1, 2] %>',
+            'BLARGETH',  # bad syntax
+            'c in <% $.all_the_things %>',
+        ]
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+
+    def test_convert_with_items_expr_matching_regex_str(self):
+        wi_str = 'b in <% [3, 4, 5] %>'
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        expected = 'b in <% [3, 4, 5] %>'
+        self.assertEquals(actual, expected)
+
+        wi_str = 'i in <% $.items %>'
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        expected = 'i in <% $.items %>'
+        self.assertEquals(actual, expected)
+
+    def test_convert_with_items_expr_nonmatching_regex_str(self):
+        wi_str = 'b in [3, 4, 5]'
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        expected = 'b in <% [3, 4, 5] %>'
+        self.assertEquals(actual, expected)
+
+    def test_convert_with_items_expr_unrecognized_expression(self):
+        wi_str = 'BLARGETH'
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        self.assertEquals(wi_str, actual)
+
     def test_convert_tasks(self):
         converter = WorkflowConverter()
         expr_converter = JinjaExpressionConverter()
@@ -416,10 +463,6 @@ class TestWorkflows(BaseTestCase):
         expr_converter = YaqlExpressionConverter()
 
         with self.assertRaises(NotImplementedError):
-            mistral_tasks = self._create_task(('concurrency', 3))
-            converter.convert_tasks(mistral_tasks, expr_converter)
-
-        with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('keep-result', True))
             converter.convert_tasks(mistral_tasks, expr_converter)
 
@@ -449,10 +492,6 @@ class TestWorkflows(BaseTestCase):
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('wait-before', 60))
-            converter.convert_tasks(mistral_tasks, expr_converter)
-
-        with self.assertRaises(NotImplementedError):
-            mistral_tasks = self._create_task(('with-items', "{{ [a, b, c] "))
             converter.convert_tasks(mistral_tasks, expr_converter)
 
         with self.assertRaises(NotImplementedError):

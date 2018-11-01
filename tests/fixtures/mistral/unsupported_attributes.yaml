@@ -10,6 +10,9 @@ circleci.test_with_items:
     error: Error condition
   tasks:
     random_task:
+      action: core.noop
       with-items: i in <% $.items %>
       concurrency: 4
-      action: core.noop
+      retry:
+        delay: 4
+        count: 15

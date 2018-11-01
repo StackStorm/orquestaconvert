@@ -1,0 +1,12 @@
+---
+version: '1.0'
+description: A sample workflow to use the rerun feature - static list.
+input:
+  - tempfile
+tasks:
+  task1:
+    with:
+      items: i in <% [0, 1, 2, 3] %>
+    action: core.local
+    input:
+      cmd: x=`cat <% ctx().tempfile %>`; y=`echo "$x * <% ctx().i %> % 2" | bc`; exit `echo $y`

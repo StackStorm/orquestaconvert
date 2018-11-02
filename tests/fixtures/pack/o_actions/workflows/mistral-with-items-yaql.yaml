@@ -8,8 +8,8 @@ input:
 tasks:
   repeat:
     with:
-      items: cmd in <% $.yaql_cmds %>
-    action: core.local cmd=<% $.cmd %>
+      items: cmd in <% ctx().yaql_cmds %>
+    action: core.local cmd=<% item(cmd) %> jinja_cmd={{ item(cmd) }}
     next:
       - when: <% succeeded() %>
         publish:

@@ -73,7 +73,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         result = self.pack_client.run(args, self.stdout, client=self.client)
 
         # Check the exit code
-        self.assertEqual(result, 1)
+        self.assertEqual(1, result)
 
         # Check the stdout and stderr
         self.assertEqual(self.stdout.getvalue(), '')
@@ -121,7 +121,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         args = ['-e', 'yaql', '--actions-dir={}'.format(self.m_actions_dir)]
         result = self.pack_client.run(args, self.stdout, client=self.client)
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertEqual(self.stderr.getvalue(), '')
@@ -141,7 +141,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertEqual(self.stderr.getvalue(), '')
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self._validate_dirs(self.p_actions_dir, self.m_actions_dir)
 
@@ -152,7 +152,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertEqual(self.stderr.getvalue(), '')
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self._validate_dirs(self.p_actions_dir, self.m_actions_dir)
 
@@ -168,7 +168,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertEqual(self.stderr.getvalue(), '')
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self.assertEqual(before_dirhash, after_dirhash)
 
@@ -181,7 +181,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
 
         after_dirhash = self._hash_directory(self.o_actions_dir, files)
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self.assertEqual(self.stderr.getvalue(), '')
 
@@ -203,7 +203,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertEqual(self.stderr.getvalue(), '')
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self._validate_dirs(self.m_actions_dir, self.o_actions_dir)
 
@@ -215,7 +215,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         args = ['--validate', '--verbose', '--actions-dir={}'.format(self.m_actions_dir)]
         result = self.pack_client.run(args, self.stdout, client=self.client)
 
-        self.assertEqual(result, 0)
+        self.assertEqual(0, result)
 
         self.assertEqual(self.stderr.getvalue(), '')
 

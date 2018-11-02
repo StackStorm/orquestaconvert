@@ -26,6 +26,26 @@ class TestExpressionsYaql(BaseTestCase):
         result = YaqlExpressionConverter.convert_string(expr)
         self.assertEquals(result, "<% ctx().test %>")
 
+    def test_convert_expression_yaql_item_vars(self):
+        expr = "<% $.test %>"
+        result = YaqlExpressionConverter.convert_string(expr, item_vars=['test'])
+        self.assertEquals(result, "<% item(test) %>")
+
+    def test_convert_expression_yaql_context_and_item_vars(self):
+        expr = "<% $.test + $.test2 - $.long_var %>"
+        result = YaqlExpressionConverter.convert_string(expr, item_vars=['test'])
+        self.assertEquals(result, "<% item(test) + ctx().test2 - ctx().long_var %>")
+
+    def test_convert_expression_yaql_function_context_vars(self):
+        expr = "<% list(range(0, $.count)) %>"
+        result = YaqlExpressionConverter.convert_string(expr)
+        self.assertEquals(result, "<% list(range(0, ctx().count)) %>")
+
+    def test_convert_expression_yaql_complex_function_context_vars(self):
+        expr = "<% zip([0, 1, 2], [3, 4, 5], $.all_the_things) %>"
+        result = YaqlExpressionConverter.convert_string(expr)
+        self.assertEquals(result, "<% zip([0, 1, 2], [3, 4, 5], ctx().all_the_things) %>")
+
     def test_convert_expression_yaql_context_vars_multiple(self):
         expr = "<% $.test + $.other %>"
         result = YaqlExpressionConverter.convert_string(expr)

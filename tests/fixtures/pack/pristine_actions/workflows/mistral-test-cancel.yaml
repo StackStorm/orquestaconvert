@@ -10,7 +10,7 @@ examples.mistral-test-cancel:
         task1:
             action: core.local
             input:
-                cmd: "while [ -e '{{ $.tempfile }}' ]; do sleep 0.1; done"
+                cmd: "while [ -e '{{ _.tempfile }}' ]; do sleep 0.1; done"
                 timeout: 300
             publish:
                 var1: <% $.message %>
@@ -19,4 +19,4 @@ examples.mistral-test-cancel:
         task2:
             action: std.noop
             input:
-                cmd: echo "{{ $.var1 }}"
+                cmd: echo "{{ _.var1 }}"

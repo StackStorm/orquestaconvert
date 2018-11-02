@@ -8,7 +8,7 @@ tasks:
   task1:
     action: core.local
     input:
-      cmd: while [ -e '{{ $.tempfile }}' ]; do sleep 0.1; done
+      cmd: while [ -e '{{ ctx().tempfile }}' ]; do sleep 0.1; done
       timeout: 300
     next:
       - when: <% succeeded() %>
@@ -19,4 +19,4 @@ tasks:
   task2:
     action: core.noop
     input:
-      cmd: echo "{{ $.var1 }}"
+      cmd: echo "{{ ctx().var1 }}"

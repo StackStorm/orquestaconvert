@@ -6,9 +6,9 @@ runner_type: mistral-v2
 entry_point: workflows/mistral-test-cancel.yaml
 enabled: true
 parameters:
-    tempfile:
-        type: string
-        required: true
-    message:
-        type: string
-        required: true
+  tempfile:
+    type: string
+    required: true
+  message:
+    type: string
+    required: true

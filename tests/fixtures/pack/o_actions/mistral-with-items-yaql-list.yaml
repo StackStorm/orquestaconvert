@@ -1,6 +1,6 @@
 ---
 name: mistral-with-items-yaql-list
-description: A sample workflow used to test the rerun feature.
+description: Mistral's with-items with a YAQL list
 pack: examples
 runner_type: orquesta
 entry_point: workflows/mistral-with-items-yaql-list.yaml

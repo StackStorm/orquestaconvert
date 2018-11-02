@@ -1,0 +1,13 @@
+---
+description: Mistral's with-items with a mixed YAQL/Jinja list
+enabled: true
+entry_point: workflows/mistral-with-items-mixed-list.yaml
+name: mistral-with-items-list
+pack: examples
+parameters:
+  cmds:
+    items:
+      type: string
+    minItems: 1
+    type: array
+runner_type: mistral-v2

@@ -8,10 +8,10 @@ input:
 tasks:
   repeat:
     with:
-      items: cmd in {{ _.jinja_cmds }}
+      items: cmd in {{ ctx().jinja_cmds }}
     action: core.local
     input:
-      cmd: '{{ ctx().cmd }}'
+      cmd: '{{ item(cmd) }}'
     next:
       - when: <% succeeded() %>
         publish:

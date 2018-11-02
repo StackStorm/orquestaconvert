@@ -11,7 +11,7 @@ input:
 tasks:
   repeat:
     with:
-      items: i in <% list(range(0, $.count)) %>
+      items: i in <% list(range(0, ctx().count)) %>
       concurrency: 2
     action: core.local
     input:

@@ -12,6 +12,6 @@ tasks:
       delay: 4
       count: 15
     with:
-      items: i in <% $.items %>
+      items: i in <% ctx().items %>
       concurrency: 4
     action: core.noop

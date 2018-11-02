@@ -10,6 +10,6 @@ examples.mistral-with-items-yaql:
     tasks:
         repeat:
             with-items: cmd in <% $.yaql_cmds %>
-            action: core.local cmd=<% $.cmd %>
+            action: core.local cmd=<% $.cmd %> jinja_cmd={{ _.cmd }}
             publish:
                 result: <% task(repeat).result.select($.stdout) %>

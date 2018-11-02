@@ -303,8 +303,8 @@ class TestWorkflows(BaseTestCase):
         ]
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
-        expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], $.all_the_things) %>"
-        self.assertEquals(actual, expected)
+        expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], ctx().all_the_things) %>"
+        self.assertEquals(expected, actual)
 
     def test_convert_with_items_expr_list_unrecognized_expression(self):
         wi_list = [
@@ -321,20 +321,20 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
-        self.assertEquals(actual, expected)
+        self.assertEquals(expected, actual)
 
         wi_str = 'i in <% $.items %>'
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
-        expected = 'i in <% $.items %>'
-        self.assertEquals(actual, expected)
+        expected = 'i in <% ctx().items %>'
+        self.assertEquals(expected, actual)
 
     def test_convert_with_items_expr_nonmatching_regex_str(self):
         wi_str = 'b in [3, 4, 5]'
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
-        self.assertEquals(actual, expected)
+        self.assertEquals(expected, actual)
 
     def test_convert_with_items_expr_unrecognized_expression(self):
         wi_str = 'BLARGETH'

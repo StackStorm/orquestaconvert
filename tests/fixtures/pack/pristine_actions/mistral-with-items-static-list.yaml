@@ -1,6 +1,6 @@
 ---
 name: mistral-with-items-static-list
-description: A sample workflow used to test the rerun feature.
+description: Mistral's with-items with a static list
 pack: examples
 runner_type: mistral-v2
 entry_point: workflows/mistral-with-items-static-list.yaml

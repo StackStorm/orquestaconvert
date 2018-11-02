@@ -43,7 +43,7 @@ class PackClientTestCase(BasePackClientRunTestCase):
 
         self.assertEqual(result, 0)
 
-        self.assertEqual(self.client.run.call_count, 7)
+        self.assertEqual(self.client.run.call_count, len(self.action_passing_files))
 
         calls = [
             mock.call(['--validate', wf], self.stdout)

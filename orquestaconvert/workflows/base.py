@@ -7,6 +7,7 @@ from orquestaconvert.expressions import ExpressionConverter
 from orquestaconvert.expressions.base import BaseExpressionConverter
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
+from orquestaconvert.expressions.mixed import MixedExpressionConverter
 from orquestaconvert.utils import task_utils
 from orquestaconvert.utils import type_utils
 
@@ -50,6 +51,7 @@ EXPR_RGX = re.compile(r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%
 
 
 class WorkflowConverter(object):
+    task_with_item_vars = []
 
     def group_task_transitions(self, mistral_transition_list):
         expr_transitions = ruamel.yaml.comments.CommentedMap()
@@ -254,7 +256,14 @@ class WorkflowConverter(object):
             raise NotImplementedError(("Action '{}' is not supported in orquesta.").
                                       format(m_action))
 
-        return MISTRAL_ACTION_CONVERSION_TABLE.get(m_action, m_action)
+        o_action = MISTRAL_ACTION_CONVERSION_TABLE.get(m_action, m_action)
+
+        kwargs = {'item_vars': self.task_with_item_vars}
+        return MixedExpressionConverter.convert_string(o_action, **kwargs)
+
+    def convert_input(self, input_):
+        kwargs = {'item_vars': self.task_with_item_vars}
+        return MixedExpressionConverter.convert_dict(input_, **kwargs)
 
     def convert_with_items_expr(self, expression, expr_converter):
         # Convert all with-items attributes
@@ -301,8 +310,9 @@ class WorkflowConverter(object):
                     var = m.group('var')
                     expr = m.group('expr')
                     converter = ExpressionConverter.get_converter(expr)
-                    expr = ExpressionConverter.unwrap_expression(expr)
-                    expr = ExpressionConverter.convert_string(expr)
+                    if converter:
+                        expr = converter.unwrap_expression(expr)
+                        expr = converter.convert_string(expr)
                     var_list.append(var)
                     expr_list.append(expr)
                 else:
@@ -313,6 +323,8 @@ class WorkflowConverter(object):
 
             converter = converter if converter else expr_converter
 
+            self.task_with_item_vars.extend(var_list)
+
             return "{vars} in {wrapped_expr}".format(
                 vars=', '.join(var_list),
                 wrapped_expr=converter.wrap_expression(zip_expression))
@@ -322,16 +334,24 @@ class WorkflowConverter(object):
                 var = m.group('var')
                 expr = m.group('expr')
                 converter = ExpressionConverter.get_converter(expr)
-                expr = ExpressionConverter.unwrap_expression(expr)
-                expr = ExpressionConverter.convert_string(expr)
-                converter = converter if converter else expr_converter
+                if converter:
+                    expr = converter.unwrap_expression(expr)
+                    expr = converter.convert_string(expr)
+                else:
+                    converter = expr_converter
                 expr = converter.wrap_expression(expr)
+                self.task_with_item_vars.append(var)
                 return "{var} in {expr}".format(var=var, expr=expr)
         return expression
 
     def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
+            # The variables in with-items expressions need to be accessed using
+            # the `item(var)` syntax, not the usual `ctx().var` syntax, so we
+            # use this list to keep track of which variables are within the
+            # task context
+            self.task_with_item_vars = []
             o_task_spec = ruamel.yaml.comments.CommentedMap()
             if force:
                 for attr in TASK_UNSUPPORTED_ATTRIBUTES:
@@ -349,6 +369,7 @@ class WorkflowConverter(object):
                 with_attr = {}
                 with_items_expr = self.convert_with_items_expr(m_task_spec['with-items'],
                                                                expr_converter)
+
                 if m_task_spec.get('concurrency'):
                     with_attr = {
                         'items': with_items_expr,
@@ -365,7 +386,7 @@ class WorkflowConverter(object):
                 o_task_spec['join'] = m_task_spec['join']
 
             if m_task_spec.get('input'):
-                o_task_spec['input'] = ExpressionConverter.convert_dict(m_task_spec['input'])
+                o_task_spec['input'] = self.convert_input(m_task_spec['input'])
 
             o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter)
             o_task_spec.update(o_task_transitions)

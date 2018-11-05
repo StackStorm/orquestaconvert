@@ -8,6 +8,35 @@ import unittest2
 import yaml
 
 
+# The pristine actions directory - this is not touched, simply copied as the
+# Mistral actions directory
+P_ACTIONS_DIR = os.path.join('tests', 'fixtures', 'pack', 'pristine_actions')
+# The Orquesta actions directory - this is not touched, this is used to compare
+# autoconverted results against - autoconverted files should match files in
+# this directory
+O_ACTIONS_DIR = os.path.join('tests', 'fixtures', 'pack', 'o_actions')
+# The Mistral actions directory - this is a copy of the pristine actions
+# directory, and files within get mangled by the autoconvert script, then
+# compared against files in the Orquesta actions directory
+M_ACTIONS_DIR = os.path.join('tests', 'fixtures', 'pack', 'actions')
+
+# These files should fail autoconversion
+ACTION_FAILING_FILES = [
+    'mistral-fail-retry.yaml',
+]
+# All of these files should be successfully converted
+ACTION_PASSING_FILES = [
+    'mistral-test-cancel.yaml',
+    'mistral-with-items-jinja.yaml',
+    'mistral-with-items-static-list.yaml',
+    'mistral-with-items-mixed-list.yaml',
+    'mistral-with-items-yaql.yaml',
+    'mistral-with-items-yaml-list.yaml',
+    'mistral-with-items-yaql-list.yaml',
+    'mistral-with-items-concurrency.yaml',
+]
+
+
 class BaseTestCase(unittest2.TestCase):
     __test__ = False
 
@@ -73,41 +102,34 @@ class BasePackClientRunTestCase(BaseCLITestCase):
         super(BasePackClientRunTestCase, self).setUp()
 
         # The pristine actions directory - this is not touched
-        self.p_actions_dir = os.path.join('tests', 'fixtures', 'pack', 'pristine_actions')
+        self.p_actions_dir = P_ACTIONS_DIR
         # The Orquesta actions directory - this is not touched
-        self.o_actions_dir = os.path.join('tests', 'fixtures', 'pack', 'o_actions')
+        self.o_actions_dir = O_ACTIONS_DIR
         # The Mistral actions directory - this is a copy of pristine actions
-        self.m_actions_dir = os.path.join('tests', 'fixtures', 'pack', 'actions')
+        self.m_actions_dir = M_ACTIONS_DIR
 
-        self.action_failing_files = [
-            'mistral-fail-retry.yaml',
-        ]
-        self.action_passing_files = [
-            'mistral-test-cancel.yaml',
-            'mistral-with-items-jinja.yaml',
-            'mistral-with-items-static-list.yaml',
-            'mistral-with-items-mixed-list.yaml',
-            'mistral-with-items-yaql.yaml',
-            'mistral-with-items-yaml-list.yaml',
-            'mistral-with-items-yaql-list.yaml',
-            'mistral-with-items-concurrency.yaml',
-        ]
+        self.action_failing_files = ACTION_FAILING_FILES
+        self.action_passing_files = ACTION_PASSING_FILES
         self.action_files = self.action_failing_files + self.action_passing_files
 
+        self.p_wfs_dir = os.path.join(self.p_actions_dir, 'workflows')
+        self.o_wfs_dir = os.path.join(self.o_actions_dir, 'workflows')
+        self.m_wfs_dir = os.path.join(self.m_actions_dir, 'workflows')
+
         self.pristine_action_wfs = {
-            os.path.join(self.p_actions_dir, af): os.path.join(self.p_actions_dir, 'workflows', af)
+            os.path.join(self.p_actions_dir, af): os.path.join(self.p_wfs_dir, af)
             for af in self.action_files
         }
         self.mistral_action_wfs = {
-            os.path.join(self.m_actions_dir, af): os.path.join(self.m_actions_dir, 'workflows', af)
+            os.path.join(self.m_actions_dir, af): os.path.join(self.m_wfs_dir, af)
             for af in self.action_failing_files
         }
         self.orquesta_action_wfs = {
-            os.path.join(self.o_actions_dir, af): os.path.join(self.o_actions_dir, 'workflows', af)
+            os.path.join(self.o_actions_dir, af): os.path.join(self.o_wfs_dir, af)
             for af in self.action_passing_files
         }
         self.action_wfs = {
-            os.path.join(self.m_actions_dir, af): os.path.join(self.m_actions_dir, 'workflows', af)
+            os.path.join(self.m_actions_dir, af): os.path.join(self.m_wfs_dir, af)
             for af in (self.action_failing_files + self.action_passing_files)
         }
 

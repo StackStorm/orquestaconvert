@@ -82,8 +82,8 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         self.assertIn(
             "ISSUE: Task 'task1' contains an attribute 'retry' that is not supported in orquesta.\n"  # noqa: E501
             "Affected files:\n"
-            "  - tests/fixtures/pack/actions/workflows/mistral-fail-retry.yaml\n"
-            "\n",
+            "  - {m_wfs_dir}/mistral-fail-retry.yaml\n"
+            "\n".format(m_wfs_dir=self.m_wfs_dir),
             err)
 
         # Check the failing actions failed conversion
@@ -116,7 +116,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
     def test_completely_convert_pack(self):
         for afile in self.action_failing_files:
             os.remove(os.path.join(self.m_actions_dir, afile))
-            os.remove(os.path.join(self.m_actions_dir, 'workflows', afile))
+            os.remove(os.path.join(self.m_wfs_dir, afile))
 
         args = ['-e', 'yaql', '--actions-dir={}'.format(self.m_actions_dir)]
         result = self.pack_client.run(args, self.stdout, client=self.client)
@@ -187,7 +187,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
 
         out = self.stdout.getvalue()
         for action in self.action_passing_files:
-            wf = os.path.join(self.o_actions_dir, 'workflows', action)
+            wf = os.path.join(self.o_wfs_dir, action)
             self.assertIn("Successfully validated workflow from {}\n".format(wf), out)
 
         self.assertEqual(before_dirhash, after_dirhash)
@@ -221,7 +221,7 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
 
         out = self.stdout.getvalue()
         for o_action in self.action_passing_files:
-            o_wf = os.path.join(self.m_actions_dir, 'workflows', o_action)
+            o_wf = os.path.join(self.m_wfs_dir, o_action)
             self.assertIn("Successfully validated workflow from {}\n".format(o_wf), out)
 
         self._validate_dirs(self.m_actions_dir, self.o_actions_dir)

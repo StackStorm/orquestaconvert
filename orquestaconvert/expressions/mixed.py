@@ -9,11 +9,32 @@ from orquestaconvert.expressions.base import BaseExpressionConverter
 from orquestaconvert.utils import type_utils
 
 
+# These regexes match Jinja and YAQL expressions, respectively. They are used
+# to pick out expressions from strings that contain both types of expressions,
+# which we call 'mixed' expressions, in attributes like task actions:
+#
+# tasks:
+#   - do_thing:
+#       with-item: target_host in {{ _.target_hosts }}
+#       action: ping <% $.ping_flags %> {{ _.target_host }}
+#
+# Each expression needs to be converted to use the ctx() and item() accessors
+# in Orquesta:
+#
+# tasks:
+#   - do_thing:
+#       action: ping <% ctx().ping_flags %> {{ item(target_host) }}
+#
 JINJA_EXPR_RGX = re.compile(r'(?P<expr>(?:{{)\s*.+?\s*(?:}}))')
 YAQL_EXPR_RGX = re.compile(r'(?P<expr>(?:<%)\s*.+?\s*(?:%>))')
 
 
 class MixedExpressionConverter(BaseExpressionConverter):
+    '''
+    Mixed expressions are strings that possibly contain both Jinja and YAQL
+    expressions. This converter is used to convert all expressions, regardless
+    of their type.
+    '''
 
     @classmethod
     def convert(cls, expr, **kwargs):

@@ -47,7 +47,12 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
 }
 
 
-EXPR_RGX = re.compile(r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$')
+# This regex matches Mistral's with-items syntax:
+# variable_name in <% YAQL_EXPRESSION %>
+# variable_name in {{ JINJA_EXPRESSION }}
+# variable_name in [static, list]
+WITH_ITEMS_PATTERN = r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$'
+WITH_ITEMS_EXPR_RGX = re.compile(WITH_ITEMS_PATTERN)
 
 
 class WorkflowConverter(object):
@@ -300,36 +305,17 @@ class WorkflowConverter(object):
         #
         # with:
         #   items: i in <% [0, 1, 2, 3] %>
+        converter = None
+        var_list = []
+        expr_list = []
         if isinstance(expression, list):
-            converter = None
-            var_list = []
-            expr_list = []
-            for expr_item in expression:
-                m = EXPR_RGX.match(expr_item)
-                if m:
-                    var = m.group('var')
-                    expr = m.group('expr')
-                    converter = ExpressionConverter.get_converter(expr)
-                    if converter:
-                        expr = converter.unwrap_expression(expr)
-                        expr = converter.convert_string(expr)
-                    var_list.append(var)
-                    expr_list.append(expr)
-                else:
-                    raise NotImplementedError("Unrecognized with-items expression: '{}' (in list)".
-                                              format(expr_item))
-
-            zip_expression = 'zip({expr})'.format(expr=', '.join(expr_list))
-
-            converter = converter if converter else expr_converter
-
-            self.task_with_item_vars.extend(var_list)
-
-            return "{vars} in {wrapped_expr}".format(
-                vars=', '.join(var_list),
-                wrapped_expr=converter.wrap_expression(zip_expression))
+            expression_list = expression
         else:
-            m = EXPR_RGX.match(expression)
+            # Create a list with a single element
+            expression_list = [expression]
+
+        for expr_item in expression_list:
+            m = WITH_ITEMS_EXPR_RGX.match(expr_item)
             if m:
                 var = m.group('var')
                 expr = m.group('expr')
@@ -337,12 +323,43 @@ class WorkflowConverter(object):
                 if converter:
                     expr = converter.unwrap_expression(expr)
                     expr = converter.convert_string(expr)
-                else:
-                    converter = expr_converter
-                expr = converter.wrap_expression(expr)
-                self.task_with_item_vars.append(var)
-                return "{var} in {expr}".format(var=var, expr=expr)
-        return expression
+                var_list.append(var)
+                expr_list.append(expr)
+            else:
+                raise NotImplementedError("Unrecognized with-items expression: '{}'".
+                                          format(expr_item))
+
+        # If we have a list of expressions, we need to join them with commas
+        # and feed that into 'zip()'
+        # If we only have one expression in the list, we don't need to join
+        # them or use 'zip()', we just use it directly
+        if len(expr_list) > 1:
+            expr_list_string = 'zip({expr})'.format(expr=', '.join(expr_list))
+        else:
+            expr_list_string = expr_list[0]
+
+        # Default to the global expression converter if we could not determine one
+        converter = converter if converter else expr_converter
+
+        # We need to save the list of expression variables for when we convert
+        # item access to item() instead of ctx()
+        self.task_with_item_vars.extend(var_list)
+
+        return "{vars} in {wrapped_expr}".format(
+            vars=', '.join(var_list),
+            wrapped_expr=converter.wrap_expression(expr_list_string))
+
+    def convert_with_items(self, m_task_spec, expr_converter):
+        with_items = m_task_spec['with-items']
+
+        with_attr = {
+            'items': self.convert_with_items_expr(with_items, expr_converter),
+        }
+
+        if m_task_spec.get('concurrency'):
+            with_attr['concurrency'] = m_task_spec['concurrency']
+
+        return with_attr
 
     def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
@@ -366,18 +383,7 @@ class WorkflowConverter(object):
                                                   format(task_name, attr))
 
             if m_task_spec.get('with-items'):
-                with_attr = {}
-                with_items_expr = self.convert_with_items_expr(m_task_spec['with-items'],
-                                                               expr_converter)
-
-                if m_task_spec.get('concurrency'):
-                    with_attr = {
-                        'items': with_items_expr,
-                        'concurrency': m_task_spec['concurrency'],
-                    }
-                else:
-                    with_attr['items'] = with_items_expr
-                o_task_spec['with'] = with_attr
+                o_task_spec['with'] = self.convert_with_items(m_task_spec, expr_converter)
 
             if m_task_spec.get('action'):
                 o_task_spec['action'] = self.convert_action(m_task_spec['action'])

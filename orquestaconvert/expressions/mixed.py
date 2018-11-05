@@ -1,14 +1,40 @@
-import ruamel.yaml.comments
+import re
 import six
 import warnings
-import orquesta.expressions.base
 
-from orquestaconvert.expressions.jinja import JinjaExpressionConverter
-from orquestaconvert.expressions.yaql import YaqlExpressionConverter
+import ruamel.yaml.comments
+
+from orquestaconvert.expressions import ExpressionConverter
+from orquestaconvert.expressions.base import BaseExpressionConverter
 from orquestaconvert.utils import type_utils
 
 
-class ExpressionConverter(object):
+# These regexes match Jinja and YAQL expressions, respectively. They are used
+# to pick out expressions from strings that contain both types of expressions,
+# which we call 'mixed' expressions, in attributes like task actions:
+#
+# tasks:
+#   - do_thing:
+#       with-item: target_host in {{ _.target_hosts }}
+#       action: ping <% $.ping_flags %> {{ _.target_host }}
+#
+# Each expression needs to be converted to use the ctx() and item() accessors
+# in Orquesta:
+#
+# tasks:
+#   - do_thing:
+#       action: ping <% ctx().ping_flags %> {{ item(target_host) }}
+#
+JINJA_EXPR_RGX = re.compile(r'(?P<expr>(?:{{)\s*.+?\s*(?:}}))')
+YAQL_EXPR_RGX = re.compile(r'(?P<expr>(?:<%)\s*.+?\s*(?:%>))')
+
+
+class MixedExpressionConverter(BaseExpressionConverter):
+    '''
+    Mixed expressions are strings that possibly contain both Jinja and YAQL
+    expressions. This converter is used to convert all expressions, regardless
+    of their type.
+    '''
 
     @classmethod
     def convert(cls, expr, **kwargs):
@@ -45,41 +71,22 @@ class ExpressionConverter(object):
             return expr
 
     @classmethod
-    def expression_type(cls, expr):
-        for name, evaluator in six.iteritems(orquesta.expressions.base.get_evaluators()):
-            if evaluator.has_expressions(expr):
-                return name
-        return None
-
-    @classmethod
-    def get_converter(cls, expr):
-        expr_type = cls.expression_type(expr)
-        if expr_type == 'jinja':
-            return JinjaExpressionConverter
-        elif expr_type == 'yaql':
-            return YaqlExpressionConverter
-        return None
-
-    @classmethod
-    def unwrap_expression(cls, expr):
-        converter = cls.get_converter(expr)
+    def convert_string_containing_expressions(cls, match, **kwargs):
+        expr = match.group('expr')
+        converter = ExpressionConverter.get_converter(expr)
         if converter:
-            return converter.unwrap_expression(expr)
-        # this isn't a Jinja or YAQL expression, so return the raw string
+            expr = converter.unwrap_expression(expr)
+            expr = converter.convert_string(expr, **kwargs)
+            expr = converter.wrap_expression(expr)
+
         return expr
 
     @classmethod
     def convert_string(cls, expr, **kwargs):
-        # - task('xxx').result -> result()
-        #    if 'xxx' != current task name, error
-        # - _. -> ctx().
-        # - $. -> ctx().
-        # - st2kv. -> st2kv('xxx')
-        # others?
-        converter = cls.get_converter(expr)
-        if converter:
-            return converter.convert_string(expr, **kwargs)
-        # this isn't a Jinja or YAQL expression, so return the raw string
+        def _inner_convert_string(match):
+            return cls.convert_string_containing_expressions(match, **kwargs)
+        expr = JINJA_EXPR_RGX.sub(_inner_convert_string, expr)
+        expr = YAQL_EXPR_RGX.sub(_inner_convert_string, expr)
         return expr
 
     @classmethod

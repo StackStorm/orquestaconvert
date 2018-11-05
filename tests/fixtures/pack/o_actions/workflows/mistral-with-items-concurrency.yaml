@@ -1,0 +1,22 @@
+---
+version: '1.0'
+description: >
+  A sample workflow that demonstrates how to set the concurrency option
+  in with-items to throttle the number of action executions that get
+  run simultaneously. Currently in this release, the concurrency option
+  does not work with YAQL expression.
+input:
+  - cmd
+  - count
+tasks:
+  repeat:
+    with:
+      items: i in <% list(range(0, ctx().count)) %>
+      concurrency: 2
+    action: core.local
+    input:
+      cmd: <% ctx().cmd %>; sleep 3
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - result: <% result().select(ctx().stdout) %>

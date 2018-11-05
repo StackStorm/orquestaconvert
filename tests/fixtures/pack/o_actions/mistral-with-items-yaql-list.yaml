@@ -1,0 +1,11 @@
+---
+name: mistral-with-items-yaql-list
+description: Mistral's with-items with a YAQL list
+pack: examples
+runner_type: orquesta
+entry_point: workflows/mistral-with-items-yaql-list.yaml
+enabled: true
+parameters:
+  tempfile:
+    type: string
+    required: true

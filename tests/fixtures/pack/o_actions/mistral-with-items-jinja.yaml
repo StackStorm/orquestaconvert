@@ -1,0 +1,13 @@
+---
+description: Run several linux commands in a single task.
+enabled: true
+entry_point: workflows/mistral-with-items-jinja.yaml
+name: mistral-with-items-jinja
+pack: examples
+parameters:
+  jinja_cmds:
+    items:
+      type: string
+    minItems: 1
+    type: array
+runner_type: orquesta

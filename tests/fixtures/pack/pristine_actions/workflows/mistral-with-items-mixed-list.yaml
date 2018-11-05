@@ -1,0 +1,16 @@
+version: '2.0'
+
+examples.mistral-with-items-list:
+    description: Mistral's with-items with a mixed YAQL/Jinja list
+    type: direct
+    input:
+        - tempfile
+    tasks:
+        task1:
+            with-items:
+                - i in <% [0, 1, 2, 3] %>
+                - j in {{ [4, 5, 6, 7] }}
+                - k in <% [8, 9] %>
+            action: core.local
+            input:
+                cmd: 'echo "<% $.i %>{{ _.j }}<% $.k %>"'

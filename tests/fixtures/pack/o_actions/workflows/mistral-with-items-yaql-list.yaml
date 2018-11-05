@@ -1,0 +1,12 @@
+---
+version: '1.0'
+description: Mistral's with-items with a YAQL list
+input:
+  - tempfile
+tasks:
+  task1:
+    with:
+      items: i in <% [0, 1, 2, 3] %>
+    action: core.local
+    input:
+      cmd: x=`cat <% ctx().tempfile %>`; y=`echo "$x * <% item(i) %> % 2" | bc`; exit `echo $y`

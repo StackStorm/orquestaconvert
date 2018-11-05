@@ -53,13 +53,13 @@ class PackClient(object):
 
         return mistral_workflows
 
-    def run(self, argv, client=None):
+    def run(self, argv, output_stream, client=None):
         self.args, args = self.parser().parse_known_args(argv)
         wf_type = self.args.workflow_type
         directory = self.args.actions_directory
         if wf_type:
             for action, workflow in self.get_workflow_files(wf_type, directory).items():
-                sys.stdout.write("{} --> {}\n".format(action, workflow))
+                output_stream.write("{} --> {}\n".format(action, workflow))
             return 0
 
         if self.args.validate:
@@ -69,7 +69,7 @@ class PackClient(object):
             for f in filenames:
                 fargs = list(args)
                 fargs.append(f)
-                total += client.run(fargs, sys.stdout)
+                total += client.run(fargs, output_stream)
             return total
 
         filenames = self.get_workflow_files('mistral-v2', directory)
@@ -173,4 +173,4 @@ class PackClient(object):
 
 
 if __name__ == '__main__':
-    sys.exit(PackClient().run(sys.argv[1:], client=Client()))
+    sys.exit(PackClient().run(sys.argv[1:], sys.stdout, client=Client()))

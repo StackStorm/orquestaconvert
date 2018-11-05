@@ -1,6 +1,6 @@
 version: '2.0'
 
-examples.mistral-test-cancel:
+examples.mistral-fail-retry:
     description: A sample workflow used to test the cancellation feature.
     type: direct
     input:
@@ -9,14 +9,17 @@ examples.mistral-test-cancel:
     tasks:
         task1:
             action: core.local
+            retry:
+                delay: 5
+                count: 15
             input:
-                cmd: "while [ -e '{{ _.tempfile }}' ]; do sleep 0.1; done"
+                cmd: "while [ -e '{{ $.tempfile }}' ]; do sleep 0.1; done"
                 timeout: 300
             publish:
                 var1: <% $.message %>
             on-success:
                 - task2
         task2:
-            action: std.noop
+            action: core.local
             input:
-                cmd: echo "{{ _.var1 }}"
+                cmd: echo "{{ $.var1 }}"

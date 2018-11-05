@@ -85,7 +85,6 @@ class BasePackClientRunTestCase(BaseCLITestCase):
         self.action_passing_files = [
             'mistral-test-cancel.yaml',
             'mistral-with-items-jinja.yaml',
-            'mistral-with-items-implicit-item.yaml',
             'mistral-with-items-static-list.yaml',
             'mistral-with-items-mixed-list.yaml',
             'mistral-with-items-yaql.yaml',

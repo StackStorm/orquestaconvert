@@ -295,6 +295,32 @@ class TestWorkflows(BaseTestCase):
         result = converter.convert_task_transitions(task_spec, expr_converter)
         self.assertEquals(result, OrderedMap([]))
 
+    def test_convert_with_items(self):
+        wi = {
+            'with-items': 'b in <% [3, 4, 5] %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        # This should NOT have a concurrency key
+        expected = {
+            'items': 'b in <% [3, 4, 5] %>',
+        }
+        self.assertEquals(expected, actual)
+
+    def test_convert_with_items_concurrency(self):
+        wi = {
+            'with-items': 'b in <% [3, 4, 5] %>',
+            'concurrency': 2,
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        # This must have a concurrency key
+        expected = {
+            'items': 'b in <% [3, 4, 5] %>',
+            'concurrency': 2,
+        }
+        self.assertEquals(expected, actual)
+
     def test_convert_with_items_expr_list(self):
         wi_list = [
             'a in <% [0, 1, 2] %>',
@@ -304,6 +330,17 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
         expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], ctx().all_the_things) %>"
+        self.assertEquals(expected, actual)
+
+    def test_convert_with_items_expr_list_one_element(self):
+        # Check that with-items expression lists with a single element don't
+        # get put into a zip() expression
+        wi_list = [
+            'a in <% [0, 1, 2] %>',
+        ]
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+        expected = "a in <% [0, 1, 2] %>"
         self.assertEquals(expected, actual)
 
     def test_convert_with_items_expr_list_unrecognized_expression(self):
@@ -339,8 +376,8 @@ class TestWorkflows(BaseTestCase):
     def test_convert_with_items_expr_unrecognized_expression(self):
         wi_str = 'BLARGETH'
         converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
-        self.assertEquals(wi_str, actual)
+        with self.assertRaises(NotImplementedError):
+            converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
 
     def test_convert_tasks(self):
         converter = WorkflowConverter()

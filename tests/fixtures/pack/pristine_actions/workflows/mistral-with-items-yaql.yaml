@@ -7,6 +7,8 @@ examples.mistral-with-items-yaql:
     type: direct
     input:
         - yaql_cmds
+    output:
+        result: <% $.result %>
     tasks:
         repeat:
             with-items: cmd in <% $.yaql_cmds %>

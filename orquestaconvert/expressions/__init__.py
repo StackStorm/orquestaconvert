@@ -86,7 +86,7 @@ class ExpressionConverter(object):
     def convert_dict(cls, expr_dict, **kwargs):
         converted = ruamel.yaml.comments.CommentedMap()
         for k, expr in six.iteritems(expr_dict):
-            converted[k] = cls.convert(expr, **kwargs)
+            converted[cls.convert(k, **kwargs)] = cls.convert(expr, **kwargs)
         return converted
 
     @classmethod

@@ -7,6 +7,8 @@ examples.mistral-jinja-repeat-with-items:
     type: direct
     input:
         - jinja_cmds
+    output:
+        result: <% $.result %>
     tasks:
         repeat:
             with-items: "cmd in {{ _.jinja_cmds }}"

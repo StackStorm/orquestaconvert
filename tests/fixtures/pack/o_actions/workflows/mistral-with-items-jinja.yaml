@@ -5,6 +5,8 @@ description: >
   multiple times with different inputs.
 input:
   - jinja_cmds
+output:
+  - result: <% ctx().result %>
 tasks:
   repeat:
     with:

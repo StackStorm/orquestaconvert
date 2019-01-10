@@ -53,6 +53,37 @@ class TestWorkflows(BaseTestCase):
                                    {'key2': 'value2'},
                                    {'key3': 'value3'}])
 
+    def test_extract_context_variables(self):
+        converter = WorkflowConverter()
+        output_block = OrderedMap([
+            ('key1', '{{ ctx().value1_str }}'),
+            ('list_<%% ctx().list_key2 %>', [
+                'a',
+                '<%% ctx().value2_list %>',
+                {
+                    'inner_key_1': 'inner_value_1',
+                    'inner_key_2': '<%% ctx().inner_value_2 %>',
+                    'inner_<%% ctx().inner_key_3 %>': 'inner_value_3',
+                    'inner_{{ ctx().inner_key_4 }}': '<%% ctx().list_key2 %>',
+                },
+            ]),
+            ('key3_int', 1),
+            ('key4_bool_false', False),
+            ('key5_bool_true', True),
+            ('key6_null', None),
+            ('key7_float', 1.0),
+        ])
+        expected_output = set([
+            'inner_key_3',
+            'inner_key_4',
+            'inner_value_2',
+            'list_key2',
+            'value1_str',
+            'value2_list',
+        ])
+        actual_output = converter.extract_context_variables(output_block)
+        self.assertEquals(actual_output, expected_output)
+
     def test_convert_task_transition_simple(self):
         converter = WorkflowConverter()
         transitions = ['a', 'b', 'c']
@@ -248,15 +279,9 @@ class TestWorkflows(BaseTestCase):
             ]),
         ])
         expr_converter = JinjaExpressionConverter()
-        result = converter.convert_task_transitions(task_spec, expr_converter)
+        result = converter.convert_task_transitions(task_spec, expr_converter, set())
         self.assertEquals(result, OrderedMap([
             ('next', [
-                OrderedMap([
-                    ('when', '{{ succeeded() }}'),
-                    ('publish', [
-                        {'good_data': '{{ ctx().good }}'}
-                    ])
-                ]),
                 OrderedMap([
                     ('when', '{{ succeeded() and (ctx().x) }}'),
                     ('publish', [
@@ -265,12 +290,6 @@ class TestWorkflows(BaseTestCase):
                     ('do', [
                         'do_thing_a',
                         'do_thing_b',
-                    ])
-                ]),
-                OrderedMap([
-                    ('when', '{{ failed() }}'),
-                    ('publish', [
-                        {'bad_data': '{{ ctx().bad }}'}
                     ])
                 ]),
                 OrderedMap([
@@ -300,7 +319,7 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         task_spec = OrderedMap([])
         expr_converter = JinjaExpressionConverter()
-        result = converter.convert_task_transitions(task_spec, expr_converter)
+        result = converter.convert_task_transitions(task_spec, expr_converter, set())
         self.assertEquals(result, OrderedMap([]))
 
     def test_convert_with_items(self):
@@ -441,7 +460,7 @@ class TestWorkflows(BaseTestCase):
                 ('on-success', ['next_task']),
             ]))
         ])
-        result = converter.convert_tasks(mistral_tasks, expr_converter)
+        result = converter.convert_tasks(mistral_tasks, expr_converter, set())
         self.assertEquals(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -471,7 +490,7 @@ class TestWorkflows(BaseTestCase):
                 ('on-success', ['next_task']),
             ]))
         ])
-        result = converter.convert_tasks(mistral_tasks, expr_converter)
+        result = converter.convert_tasks(mistral_tasks, expr_converter, set())
         self.assertEquals(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -498,7 +517,7 @@ class TestWorkflows(BaseTestCase):
                 ('join', 'all'),
             ]))
         ])
-        result = converter.convert_tasks(mistral_tasks, expr_converter)
+        result = converter.convert_tasks(mistral_tasks, expr_converter, set())
         self.assertEquals(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -551,39 +570,39 @@ class TestWorkflows(BaseTestCase):
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('keep-result', True))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('pause-before', True))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('retry', True))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('safe-rerun', True))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('target', 'some-node'))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('timeout', 60))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('wait-after', 60))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('wait-before', 60))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('workflow', 'someworkflowname'))
-            converter.convert_tasks(mistral_tasks, expr_converter)
+            converter.convert_tasks(mistral_tasks, expr_converter, set())
 
     def test_expr_type_converter_none(self):
         expr_type = None

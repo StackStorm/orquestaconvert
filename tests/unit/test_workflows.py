@@ -171,6 +171,7 @@ class TestWorkflows(BaseTestCase):
         orquesta_expr = 'succeeded()'
 
         result = converter.convert_task_transition_expr(expression_list,
+                                                        {},
                                                         orquesta_expr)
 
         expected = [
@@ -192,6 +193,7 @@ class TestWorkflows(BaseTestCase):
         orquesta_expr = None
 
         result = converter.convert_task_transition_expr(expression_list,
+                                                        {},
                                                         orquesta_expr)
 
         expected = [
@@ -257,6 +259,9 @@ class TestWorkflows(BaseTestCase):
                 ]),
                 OrderedMap([
                     ('when', '{{ succeeded() and (ctx().x) }}'),
+                    ('publish', [
+                        {'good_data': '{{ ctx().good }}'}
+                    ]),
                     ('do', [
                         'do_thing_a',
                         'do_thing_b',
@@ -270,6 +275,9 @@ class TestWorkflows(BaseTestCase):
                 ]),
                 OrderedMap([
                     ('when', '{{ failed() and (ctx().e) }}'),
+                    ('publish', [
+                        {'bad_data': '{{ ctx().bad }}'}
+                    ]),
                     ('do', [
                         'do_thing_error',
                     ])

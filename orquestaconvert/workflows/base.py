@@ -123,7 +123,7 @@ class WorkflowConverter(object):
 
         return simple_transition
 
-    def convert_task_transition_expr(self, expression_list, orquesta_expr):
+    def convert_task_transition_expr(self, expression_list, publish, orquesta_expr):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
         # expressions in the same `when:` condition
@@ -159,6 +159,9 @@ class WorkflowConverter(object):
                 o_expr = expr_converted
 
             expr_transition['when'] = o_expr
+            if publish:
+                converted_publish = ExpressionConverter.convert_dict(publish).items()
+                expr_transition['publish'] = [{k: v} for k, v in converted_publish]
             expr_transition['do'] = task_list
             transitions.append(expr_transition)
         return transitions
@@ -242,13 +245,14 @@ class WorkflowConverter(object):
             # Create a transition for the simple task lists
             if data['publish'] or trans_simple:
                 o_trans_simple = self.convert_task_transition_simple(trans_simple,
-                                                                     data['publish'],
+                                                                     data.get('publish'),
                                                                      data['orquesta_expr'],
                                                                      expr_converter)
                 o_task_spec['next'].append(o_trans_simple)
 
             # Create multiple transitions, one for each unique expression
             o_trans_expr_list = self.convert_task_transition_expr(trans_expr,
+                                                                  data.get('publish'),
                                                                   data['orquesta_expr'])
             o_task_spec['next'].extend(o_trans_expr_list)
 

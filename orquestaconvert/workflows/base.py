@@ -456,8 +456,8 @@ class WorkflowConverter(object):
             orquesta_wf['input'] = ExpressionConverter.convert_list(mistral_wf['input'])
 
         if mistral_wf.get('vars'):
-            vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
-            orquesta_wf['vars'] = self.dict_to_list(vars)
+            expression_vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
+            orquesta_wf['vars'] = self.dict_to_list(expression_vars)
 
         if mistral_wf.get('output'):
             output = ExpressionConverter.convert_dict(mistral_wf['output'])

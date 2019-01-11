@@ -21,4 +21,4 @@ tasks:
     next:
       - when: <% succeeded() %>
         publish:
-          - result: '{{ task(repeat).result|selectattr("stdout") }}'
+          - result: '{{ result()|selectattr("stdout") }}'

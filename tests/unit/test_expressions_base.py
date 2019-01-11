@@ -52,11 +52,3 @@ class BaseExpressionsTestCase(BaseTestCase):
     def test_convert_static_context_vars_raises(self):
         with self.assertRaises(NotImplementedError):
             BaseExpressionConverter.convert_context_vars('junk')
-
-    def test_convert_task_result_raises(self):
-        with self.assertRaises(NotImplementedError):
-            BaseExpressionConverter.convert_task_result('junk')
-
-    def test_convert_st2kv(self):
-        with self.assertRaises(NotImplementedError):
-            BaseExpressionConverter.convert_st2kv('junk')

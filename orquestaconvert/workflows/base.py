@@ -357,7 +357,16 @@ class WorkflowConverter(object):
         }
 
         if m_task_spec.get('concurrency'):
-            with_attr['concurrency'] = m_task_spec['concurrency']
+            concurrency_expr = m_task_spec['concurrency']
+
+            # Only try to convert the concurrency expression if it's a str
+            if isinstance(concurrency_expr, six.string_types):
+                converter = ExpressionConverter.get_converter(concurrency_expr)
+                if converter:
+                    concurrency_expr = converter.unwrap_expression(concurrency_expr)
+                    concurrency_expr = converter.convert_string(concurrency_expr)
+                    concurrency_expr = converter.wrap_expression(concurrency_expr)
+            with_attr['concurrency'] = concurrency_expr
 
         return with_attr
 

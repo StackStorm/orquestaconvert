@@ -307,7 +307,7 @@ class TestWorkflows(BaseTestCase):
         }
         self.assertEquals(expected, actual)
 
-    def test_convert_with_items_concurrency(self):
+    def test_convert_with_items_concurrency_integer(self):
         wi = {
             'with-items': 'b in <% [3, 4, 5] %>',
             'concurrency': 2,
@@ -318,6 +318,48 @@ class TestWorkflows(BaseTestCase):
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
             'concurrency': 2,
+        }
+        self.assertEquals(expected, actual)
+
+    def test_convert_with_items_concurrency_string(self):
+        wi = {
+            'with-items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '2',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        # This must have a concurrency key
+        expected = {
+            'items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '2',
+        }
+        self.assertEquals(expected, actual)
+
+    def test_convert_with_items_concurrency_yaql(self):
+        wi = {
+            'with-items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '<% $.count %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        # This must have a concurrency key
+        expected = {
+            'items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '<% ctx().count %>',
+        }
+        self.assertEquals(expected, actual)
+
+    def test_convert_with_items_concurrency_jinja(self):
+        wi = {
+            'with-items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '{{ _.count }}',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        # This must have a concurrency key
+        expected = {
+            'items': 'b in <% [3, 4, 5] %>',
+            'concurrency': '{{ ctx().count }}',
         }
         self.assertEquals(expected, actual)
 

@@ -75,3 +75,13 @@ class TestExpressionsJinja(BaseTestCase):
         expr = '{{ st2kv.user.test.kv }}'
         result = JinjaExpressionConverter.convert_string(expr)
         self.assertEquals(result, "{{ st2kv('user.test.kv') }}")
+
+    def test_convert_expression_jinja_st2_execution_id(self):
+        expr = '{{ env().st2_execution_id }}'
+        result = JinjaExpressionConverter.convert_string(expr)
+        self.assertEquals(result, "{{ ctx().st2.action_execution_id }}")
+
+    def test_convert_expression_jinja_st2_api_url(self):
+        expr = '{{ env().st2_action_api_url }}'
+        result = JinjaExpressionConverter.convert_string(expr)
+        self.assertEquals(result, "{{ ctx().st2.api_url }}")

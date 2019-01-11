@@ -33,6 +33,14 @@ class AbstractBaseExpressionsTestCase(BaseTestCase):
         with self.assertRaises(NotImplementedError):
             AbstractBaseExpressionConverter.convert_st2kv('junk')
 
+    def test_convert_st2_execution_id(self):
+        with self.assertRaises(NotImplementedError):
+            AbstractBaseExpressionConverter.convert_st2_execution_id('junk')
+
+    def test_convert_st2_api_url(self):
+        with self.assertRaises(NotImplementedError):
+            AbstractBaseExpressionConverter.convert_st2_api_url('junk')
+
 
 class BaseExpressionsTestCase(BaseTestCase):
     __test__ = True

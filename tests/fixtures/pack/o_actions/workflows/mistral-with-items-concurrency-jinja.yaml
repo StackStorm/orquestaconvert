@@ -13,12 +13,12 @@ output:
 tasks:
   repeat:
     with:
-      items: i in <% list(range(0, ctx().count)) %>
+      items: i in {{ range(0, ctx().count) }}
       concurrency: '{{ ctx().count }}'
     action: core.local
     input:
-      cmd: <% ctx().cmd %>; sleep 3
+      cmd: '{{ ctx().cmd }}; sleep 3'
     next:
       - when: <% succeeded() %>
         publish:
-          - result: <% result().select(ctx().stdout) %>
+          - result: '{{ task(repeat).result|selectattr("stdout") }}'

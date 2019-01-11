@@ -14,10 +14,10 @@ examples.mistral-with-items-concurrency-jinja:
         result: <% $.result %>
     tasks:
         repeat:
-            with-items: i in <% list(range(0, $.count)) %>
+            with-items: 'i in {{ range(0, _.count) }}'
             concurrency: '{{ _.count }}'
             action: core.local
             input:
-                cmd: "<% $.cmd %>; sleep 3"
+                cmd: '{{ _.cmd }}; sleep 3'
             publish:
-                result: <% task(repeat).result.select($.stdout) %>
+                result: '{{ task(repeat).result|selectattr("stdout") }}'

@@ -1,0 +1,23 @@
+version: '2.0'
+
+examples.mistral-with-items-concurrency-jinja:
+    description: >
+        A sample workflow that demonstrates how to set the concurrency option
+        in with-items to throttle the number of action executions that get
+        run simultaneously. Currently in this release, the concurrency option
+        does not work with YAQL expression.
+    type: direct
+    input:
+        - cmd
+        - count
+    output:
+        result: <% $.result %>
+    tasks:
+        repeat:
+            with-items: 'i in {{ range(0, _.count) }}'
+            concurrency: '{{ _.count }}'
+            action: core.local
+            input:
+                cmd: '{{ _.cmd }}; sleep 3'
+            publish:
+                result: '{{ task(repeat).result|selectattr("stdout") }}'

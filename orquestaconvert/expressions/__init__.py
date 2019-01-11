@@ -47,7 +47,7 @@ class ExpressionConverter(object):
     @classmethod
     def expression_type(cls, expr):
         for name, evaluator in six.iteritems(orquesta.expressions.base.get_evaluators()):
-            if evaluator.has_expressions(expr):
+            if evaluator.has_expressions(str(expr)):
                 return name
         return None
 

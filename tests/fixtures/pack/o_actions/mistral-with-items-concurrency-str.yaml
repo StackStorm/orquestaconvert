@@ -1,0 +1,14 @@
+---
+description: Repeat a local linux command for given number of times.
+enabled: true
+entry_point: workflows/mistral-with-items-concurrency-str.yaml
+name: mistral-with-items-concurrency-str
+pack: examples
+parameters:
+  cmd:
+    required: true
+    type: string
+  count:
+    default: 6
+    type: integer
+runner_type: orquesta

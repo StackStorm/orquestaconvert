@@ -34,6 +34,9 @@ ACTION_PASSING_FILES = [
     'mistral-with-items-yaml-list.yaml',
     'mistral-with-items-yaql-list.yaml',
     'mistral-with-items-concurrency.yaml',
+    'mistral-with-items-concurrency-str.yaml',
+    'mistral-with-items-concurrency-jinja.yaml',
+    'mistral-with-items-concurrency-yaql.yaml',
 ]
 
 

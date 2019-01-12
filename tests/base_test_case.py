@@ -37,6 +37,8 @@ ACTION_PASSING_FILES = [
     'mistral-with-items-concurrency-str.yaml',
     'mistral-with-items-concurrency-jinja.yaml',
     'mistral-with-items-concurrency-yaql.yaml',
+    'mistral-transition-expressions.yaml',
+    'mistral-publish-only-transitions.yaml',
 ]
 
 

@@ -1,0 +1,47 @@
+---
+version: '1.0'
+description: >
+  Test the conversion of task transition expressions in conjunction with
+  the publish attribute
+input:
+  - tempfile
+  - message
+tasks:
+  task1:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - published_variable_1: Simple string value
+        do:
+          - notify_start
+      - when: <% succeeded() and (ctx().tempfile != null) %>
+        publish:
+          - published_variable_1: Simple string value
+        do:
+          - yaql_transition_expression
+      - when: '{{ succeeded() and (ctx().tempfile = null) }}'
+        publish:
+          - published_variable_1: Simple string value
+        do:
+          - jinja_transition_expression
+      - do:
+          - simple_complete_task
+      - when: <% ctx().yaql_expression %>
+        do:
+          - yaql_complete_task
+      - when: '{{ ctx().jinja_expression }}'
+        do:
+          - jinja_complete_task
+  notify_start:
+    action: core.noop
+  yaql_transition_expression:
+    action: core.noop
+  jinja_transition_expression:
+    action: core.noop
+  simple_complete_task:
+    action: core.noop
+  yaql_complete_task:
+    action: core.noop
+  jinja_complete_task:
+    action: core.noop

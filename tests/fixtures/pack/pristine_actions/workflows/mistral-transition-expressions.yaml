@@ -1,0 +1,35 @@
+version: '2.0'
+
+examples.mistral-transition-expressions:
+    description: >
+        Test the conversion of task transition expressions in conjunction with
+        the publish attribute
+    type: direct
+    input:
+        - tempfile
+        - message
+    tasks:
+        task1:
+            action: core.noop
+            publish:
+                published_variable_1: Simple string value
+            on-success:
+                - notify_start
+                - yaql_transition_expression: <% $.tempfile != null %>
+                - jinja_transition_expression: "{{ _.tempfile = null }}"
+            on-complete:
+                - simple_complete_task
+                - yaql_complete_task: <% $.yaql_expression %>
+                - jinja_complete_task: '{{ _.jinja_expression }}'
+        notify_start:
+            action: core.noop
+        yaql_transition_expression:
+            action: core.noop
+        jinja_transition_expression:
+            action: core.noop
+        simple_complete_task:
+            action: core.noop
+        yaql_complete_task:
+            action: core.noop
+        jinja_complete_task:
+            action: core.noop

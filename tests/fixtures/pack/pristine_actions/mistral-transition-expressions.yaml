@@ -1,0 +1,16 @@
+---
+name: mistral-transition-expressions
+description: >
+  Test the conversion of task transition expressions in conjunction with the
+  publish attribute
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-transition-expressions.yaml
+enabled: true
+parameters:
+  tempfile:
+    type: string
+    required: true
+  message:
+    type: string
+    required: true

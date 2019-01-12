@@ -54,6 +54,9 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
 WITH_ITEMS_PATTERN = r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$'
 WITH_ITEMS_EXPR_RGX = re.compile(WITH_ITEMS_PATTERN)
 
+CTX_PATTERN = r'\bctx\([\'"]*(\w+)[\'"]*\)|\bctx\(\).(\w+)\b'
+CTX_RGX = re.compile(CTX_PATTERN)
+
 
 class WorkflowConverter(object):
     task_with_item_vars = []
@@ -93,6 +96,24 @@ class WorkflowConverter(object):
     def dict_to_list(self, d):
         return [{k: v} for k, v in six.iteritems(d)]
 
+    def extract_context_variables(self, obj):
+        # given an object that contains Orquesta YAQL or Jinja expressions (eg: contain 'ctx()'),
+        # extract all variable names into a set
+        variable_names = set()
+        if isinstance(obj, type_utils.dict_types):
+            for key in obj.keys():
+                variable_names = variable_names | self.extract_context_variables(key)
+            for val in obj.values():
+                variable_names = variable_names | self.extract_context_variables(val)
+        elif isinstance(obj, list):
+            for element in obj:
+                variable_names = variable_names | self.extract_context_variables(element)
+        elif isinstance(obj, six.string_types):
+            for mobj in CTX_RGX.finditer(obj):
+                match = mobj.group(1) or mobj.group(2)
+                variable_names.add(match)
+        return variable_names
+
     def convert_task_transition_simple(self, transitions, publish, orquesta_expr, expr_converter):
         # if this is a simple name of a task:
         # on-success:
@@ -123,7 +144,7 @@ class WorkflowConverter(object):
 
         return simple_transition
 
-    def convert_task_transition_expr(self, expression_list, orquesta_expr):
+    def convert_task_transition_expr(self, expression_list, publish, orquesta_expr):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
         # expressions in the same `when:` condition
@@ -159,6 +180,9 @@ class WorkflowConverter(object):
                 o_expr = expr_converted
 
             expr_transition['when'] = o_expr
+            if publish:
+                converted_publish = ExpressionConverter.convert_dict(publish).items()
+                expr_transition['publish'] = [{k: v} for k, v in converted_publish]
             expr_transition['do'] = task_list
             transitions.append(expr_transition)
         return transitions
@@ -185,7 +209,7 @@ class WorkflowConverter(object):
                 o_task_spec['next'][i]['do'] = new_dos
         return o_task_spec
 
-    def convert_task_transitions(self, m_task_spec, expr_converter):
+    def convert_task_transitions(self, m_task_spec, expr_converter, wf_vars):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
         # expressions in the same `when:` condition
@@ -239,16 +263,19 @@ class WorkflowConverter(object):
             m_transitions = m_task_spec.get(m_transition_name, [])
             trans_simple, trans_expr = self.group_task_transitions(m_transitions)
 
+            publish_to_workflow_context = bool(wf_vars & set(data.get('publish').keys()))
+
             # Create a transition for the simple task lists
-            if data['publish'] or trans_simple:
+            if trans_simple or publish_to_workflow_context:
                 o_trans_simple = self.convert_task_transition_simple(trans_simple,
-                                                                     data['publish'],
+                                                                     data.get('publish'),
                                                                      data['orquesta_expr'],
                                                                      expr_converter)
                 o_task_spec['next'].append(o_trans_simple)
 
             # Create multiple transitions, one for each unique expression
             o_trans_expr_list = self.convert_task_transition_expr(trans_expr,
+                                                                  data.get('publish'),
                                                                   data['orquesta_expr'])
             o_task_spec['next'].extend(o_trans_expr_list)
 
@@ -370,7 +397,7 @@ class WorkflowConverter(object):
 
         return with_attr
 
-    def convert_tasks(self, mistral_wf_tasks, expr_converter, force=False):
+    def convert_tasks(self, mistral_wf_tasks, expr_converter, wf_vars, force=False):
         orquesta_wf_tasks = ruamel.yaml.comments.CommentedMap()
         for task_name, m_task_spec in six.iteritems(mistral_wf_tasks):
             # The variables in with-items expressions need to be accessed using
@@ -403,7 +430,7 @@ class WorkflowConverter(object):
             if m_task_spec.get('input'):
                 o_task_spec['input'] = self.convert_input(m_task_spec['input'])
 
-            o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter)
+            o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter, wf_vars)
             o_task_spec.update(o_task_transitions)
 
             orquesta_wf_tasks[task_utils.translate_task_name(task_name)] = o_task_spec
@@ -428,6 +455,7 @@ class WorkflowConverter(object):
         return expr_converter
 
     def convert(self, mistral_wf, expr_type=None, force=False):
+        variables_used_in_output = set()
         expr_converter = self.expr_type_converter(expr_type)
         orquesta_wf = ruamel.yaml.comments.CommentedMap()
         orquesta_wf['version'] = '1.0'
@@ -456,15 +484,21 @@ class WorkflowConverter(object):
             orquesta_wf['input'] = ExpressionConverter.convert_list(mistral_wf['input'])
 
         if mistral_wf.get('vars'):
-            vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
-            orquesta_wf['vars'] = self.dict_to_list(vars)
+            expression_vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
+            orquesta_wf['vars'] = self.dict_to_list(expression_vars)
 
         if mistral_wf.get('output'):
             output = ExpressionConverter.convert_dict(mistral_wf['output'])
             orquesta_wf['output'] = self.dict_to_list(output)
 
+            variables_used_in_output = self.extract_context_variables(output)
+
         if mistral_wf.get('tasks'):
-            o_tasks = self.convert_tasks(mistral_wf['tasks'], expr_converter, force=force)
+            o_tasks = self.convert_tasks(
+                mistral_wf['tasks'],
+                expr_converter,
+                variables_used_in_output,
+                force=force)
             if o_tasks:
                 orquesta_wf['tasks'] = o_tasks
 

@@ -1,0 +1,14 @@
+---
+name: mistral-publish-only-transitions
+description: Test the conversion of publish-only task transitions
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-publish-only-transitions.yaml
+enabled: true
+parameters:
+  tempfile:
+    type: string
+    required: true
+  message:
+    type: string
+    required: true

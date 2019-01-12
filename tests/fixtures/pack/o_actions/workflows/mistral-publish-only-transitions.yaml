@@ -1,0 +1,58 @@
+---
+version: '1.0'
+description: Test the conversion of publish-only task transitions
+input:
+  - tempfile
+  - message
+output:
+  - init_result_yaql: <% ctx().used_init_result %>
+  - init_result_jinja: '{{ ctx().used_init_result }}'
+  - used_simple_result: <% ctx().used_simple_result %>
+  - used_yaql_result: <% ctx().used_yaql_result %>
+  - used_jinja_result: '{{ ctx().used_jinja_result }}'
+tasks:
+  init:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - used_init_result: SUCCESS!
+        do:
+          - simple_task_transition
+          - simple_task_transition_unused_publish
+      - when: <% succeeded() and (ctx().yaql_expression) %>
+        publish:
+          - used_init_result: SUCCESS!
+        do:
+          - yaql_task
+          - yaql_task_unused_publish
+      - when: '{{ succeeded() and (ctx().jinja_expression) }}'
+        publish:
+          - used_init_result: SUCCESS!
+        do:
+          - jinja_task
+          - jinja_task_unused_publish
+  simple_task_transition:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - used_simple_result: This simple result should be in the converted workflow
+  simple_task_transition_unused_publish:
+    action: core.noop
+  yaql_task:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - used_yaql_result: This YAQL result should be converted
+  yaql_task_unused_publish:
+    action: core.noop
+  jinja_task:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - used_jinja_result: This Jinja result should be converted
+  jinja_task_unused_publish:
+    action: core.noop

@@ -10,6 +10,8 @@ examples.mistral-with-items-concurrency:
     input:
         - cmd
         - count
+    output:
+        result: <% $.result %>
     tasks:
         repeat:
             with-items: i in <% list(range(0, $.count)) %>

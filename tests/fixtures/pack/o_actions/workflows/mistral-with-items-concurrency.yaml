@@ -8,6 +8,8 @@ description: >
 input:
   - cmd
   - count
+output:
+  - result: <% ctx().result %>
 tasks:
   repeat:
     with:

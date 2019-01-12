@@ -3,6 +3,8 @@ version: '2.0'
 
 st2cicd.boolean_publish_parameters:
   type: direct
+  output:
+    continue: '{{ _.continue }}'
   tasks:
     random_task_one:
       action: core.noop

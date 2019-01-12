@@ -1,5 +1,7 @@
 ---
 version: '1.0'
+output:
+  - continue: '{{ ctx().continue }}'
 tasks:
   random_task_one:
     action: core.noop

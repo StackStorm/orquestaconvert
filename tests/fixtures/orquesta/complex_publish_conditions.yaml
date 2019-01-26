@@ -1,0 +1,35 @@
+---
+version: '1.0'
+input:
+  - var1: initial_value_1
+  - var2: initial_value_2
+  - var3: initial_value_3
+output:
+  - var1: '{{ _.var1 }}'
+  - var2: '{{ _.var2 }}'
+  - var3: '{{ _.var3 }}'
+tasks:
+  first_task:
+    action: core.noop
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - var1: value_1_from_first_task
+        do:
+          - success_task
+      - when: <% failed() %>
+        publish:
+          - var2: value_2_from_first_task
+        do:
+          - error_task
+      - publish:
+          - var1: value_1_from_first_task
+          - var2: value_2_from_first_task
+        do:
+          - complete_task
+  success_task:
+    action: core.noop
+  error_task:
+    action: core.noop
+  complete_task:
+    action: core.noop

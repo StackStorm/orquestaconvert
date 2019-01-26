@@ -8,6 +8,9 @@ import ruamel.yaml
 OrderedMap = ruamel.yaml.comments.CommentedMap
 
 
+BaseTestCase.maxDiff = None
+
+
 class TestWorkflows(BaseTestCase):
     __test__ = True
 
@@ -279,8 +282,8 @@ class TestWorkflows(BaseTestCase):
             ]),
         ])
         expr_converter = JinjaExpressionConverter()
-        result = converter.convert_task_transitions(task_spec, expr_converter, set())
-        self.assertEquals(result, OrderedMap([
+        result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
+        self.assertDictEqual(result, OrderedMap([
             ('next', [
                 OrderedMap([
                     ('when', '{{ succeeded() and (ctx().x) }}'),
@@ -290,7 +293,7 @@ class TestWorkflows(BaseTestCase):
                     ('do', [
                         'do_thing_a',
                         'do_thing_b',
-                    ])
+                    ]),
                 ]),
                 OrderedMap([
                     ('when', '{{ failed() and (ctx().e) }}'),
@@ -299,18 +302,26 @@ class TestWorkflows(BaseTestCase):
                     ]),
                     ('do', [
                         'do_thing_error',
-                    ])
+                    ]),
                 ]),
                 OrderedMap([
+                    ('publish', [
+                        {'good_data': '{{ ctx().good }}'},
+                        {'bad_data': '{{ ctx().bad }}'},
+                    ]),
                     ('do', [
                         'do_thing_always',
-                    ])
+                    ]),
                 ]),
                 OrderedMap([
                     ('when', '{{ ctx().d }}'),
+                    ('publish', [
+                        {'good_data': '{{ ctx().good }}'},
+                        {'bad_data': '{{ ctx().bad }}'},
+                    ]),
                     ('do', [
                         'do_thing_sometimes',
-                    ])
+                    ]),
                 ]),
             ]),
         ]))
@@ -319,8 +330,75 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         task_spec = OrderedMap([])
         expr_converter = JinjaExpressionConverter()
-        result = converter.convert_task_transitions(task_spec, expr_converter, set())
+        result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
         self.assertEquals(result, OrderedMap([]))
+
+    def test_convert_task_transitions_common_publish_keys_same_values(self):
+        converter = WorkflowConverter()
+        task_spec = OrderedMap([
+            ('publish', OrderedMap([
+                ('good_data', '{{ _.good }}'),
+                ('common_data_1', '{{ _.common_1 }}'),
+                ('common_data_2', '{{ _.common_2 }}'),
+            ])),
+            ('publish-on-error', OrderedMap([
+                ('bad_data', '{{ _.bad }}'),
+                ('common_data_1', '{{ _.common_1 }}'),
+                ('common_data_2', '{{ _.common_2 }}'),
+            ])),
+            ('on-complete', [
+                'do_thing_always'
+            ]),
+        ])
+        expr_converter = JinjaExpressionConverter()
+
+        result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
+        self.assertDictEqual(result, OrderedMap([
+            ('next', [
+                OrderedMap([
+                    ('publish', [
+                        {'good_data': '{{ ctx().good }}'},
+                        {'common_data_1': '{{ ctx().common_1 }}'},
+                        {'common_data_2': '{{ ctx().common_2 }}'},
+                        {'bad_data': '{{ ctx().bad }}'},
+                    ]),
+                    ('do', [
+                        'do_thing_always',
+                    ]),
+                ]),
+            ]),
+        ]))
+
+    def test_convert_task_transitions_common_publish_keys_different_values(self):
+        converter = WorkflowConverter()
+        task_spec = OrderedMap([
+            ('publish', OrderedMap([
+                ('good_data', '{{ _.good }}'),
+                ('common_key_1', '{{ _.common_data }}'),
+                ('common_key_2', '{{ _.different_data_1_1 }}'),
+                ('common_key_3', '{{ _.different_data_1_2 }}'),
+            ])),
+            ('publish-on-error', OrderedMap([
+                ('bad_data', '{{ _.bad }}'),
+                ('common_key_1', '{{ _.common_data }}'),
+                ('common_key_2', '{{ _.different_data_2_1 }}'),
+                ('common_key_3', '{{ _.different_data_2_2 }}'),
+            ])),
+            ('on-complete', [
+                OrderedMap([('do_thing_sometimes', '{{ _.d }}')]),
+                'do_thing_always'
+            ]),
+        ])
+        expr_converter = JinjaExpressionConverter()
+
+        with self.assertRaises(NotImplementedError) as ctx_m:
+            converter.convert_task_transitions("tsk_name", task_spec, expr_converter, set())
+
+        self.assertEquals("Task 'tsk_name' contains one or more keys (common_key_2, common_key_3) "
+                          "in both publish and publish-on-error dictionaries that have different "
+                          "values. Please either remove the common keys, or ensure that the "
+                          "values of any common keys are the same.",
+                          str(ctx_m.exception))
 
     def test_convert_with_items(self):
         wi = {

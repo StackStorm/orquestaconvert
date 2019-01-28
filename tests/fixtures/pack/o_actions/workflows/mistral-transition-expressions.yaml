@@ -25,12 +25,18 @@ tasks:
           - published_variable_1: Simple string value
         do:
           - jinja_transition_expression
-      - do:
+      - publish:
+          - published_variable_1: Simple string value
+        do:
           - simple_complete_task
       - when: <% ctx().yaql_expression %>
+        publish:
+          - published_variable_1: Simple string value
         do:
           - yaql_complete_task
       - when: '{{ ctx().jinja_expression }}'
+        publish:
+          - published_variable_1: Simple string value
         do:
           - jinja_complete_task
   notify_start:

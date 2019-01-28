@@ -209,7 +209,7 @@ class WorkflowConverter(object):
                 o_task_spec['next'][i]['do'] = new_dos
         return o_task_spec
 
-    def convert_task_transitions(self, m_task_spec, expr_converter, wf_vars):
+    def convert_task_transitions(self, task_name, m_task_spec, expr_converter, wf_vars):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
         # expressions in the same `when:` condition
@@ -237,16 +237,26 @@ class WorkflowConverter(object):
         #     publish:
         #       - bad_data: "{{ ctx().bad }}"
         #   - when: "{{ succeeded() and ctx().x }}"
+        #     publish:
+        #       - good_data: "{{ ctx().good }}"
         #     do:
         #       - do_thing_a
         #       - do_thing_b
         #   - when: "{{ failed() and ctx().e }}"
+        #     publish:
+        #       - bad_data: "{{ ctx().bad }}"
         #     do:
         #       - do_thing_error
         #   - when: "{{ ctx().d }}"
+        #     publish:
+        #       - good_data: "{{ ctx().good }}"
+        #       - bad_data: "{{ ctx().bad }}"
         #     do:
         #       - do_thing_sometimes
-        #   - do:
+        #   - publish:
+        #       - good_data: "{{ ctx().good }}"
+        #       - bad_data: "{{ ctx().bad }}"
+        #     do:
         #       - do_thing_always
         o_task_spec = ruamel.yaml.comments.CommentedMap()
         o_task_spec['next'] = []
@@ -258,6 +268,39 @@ class WorkflowConverter(object):
 
         if m_task_spec.get('publish-on-error'):
             transitions['on-error']['publish'] = m_task_spec['publish-on-error']
+
+        if m_task_spec.get('on-complete'):
+            # Handling on-complete publishing is more complicated, because the
+            # dictionaries from publish and publish-on-error need to be
+            # combined, but cannot overlap.
+            publish = m_task_spec.get('publish', ruamel.yaml.comments.CommentedMap())
+            publish_on_error = m_task_spec.get('publish-on-error',
+                                               ruamel.yaml.comments.CommentedMap())
+
+            # Generate a list of common keys for publish and publish-on-error
+            # dictionaries
+            common_publish_keys = list(set(publish.keys()) & set(publish_on_error.keys()))
+
+            # If common keys have the same value, it's fine if we merge the
+            # dictionaries.
+            common_publish_keys_different_values = [
+                k for k in common_publish_keys if publish[k] != publish_on_error[k]
+            ]
+
+            # If there are any common keys that correspond to different values
+            # the publish dictionary and publish-on-error dictionaries, we need
+            # to bail.
+            if common_publish_keys_different_values:
+                error_message = ("Task '{}' contains one or more keys ({}) in both publish and "
+                                 "publish-on-error dictionaries that have different values. "
+                                 "Please either remove the common keys, or ensure that the values "
+                                 "of any common keys are the same.").\
+                    format(task_name, ', '.join(common_publish_keys_different_values))
+                raise NotImplementedError(error_message)
+
+            publish_on_complete = publish.copy()
+            publish_on_complete.update(publish_on_error)
+            transitions['on-complete']['publish'] = publish_on_complete
 
         for m_transition_name, data in six.iteritems(transitions):
             m_transitions = m_task_spec.get(m_transition_name, [])
@@ -430,7 +473,8 @@ class WorkflowConverter(object):
             if m_task_spec.get('input'):
                 o_task_spec['input'] = self.convert_input(m_task_spec['input'])
 
-            o_task_transitions = self.convert_task_transitions(m_task_spec, expr_converter, wf_vars)
+            o_task_transitions = self.convert_task_transitions(
+                task_name, m_task_spec, expr_converter, wf_vars)
             o_task_spec.update(o_task_transitions)
 
             orquesta_wf_tasks[task_utils.translate_task_name(task_name)] = o_task_spec

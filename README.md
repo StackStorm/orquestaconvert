@@ -6,9 +6,19 @@ Converts Mistral workflows into Orquesta workflows
 
 # Usage
 
-## `orquestaconvert.sh` - convert a single workflow and print to stdout
+## Getting Started
 
-The script automatically sets up a `virtualenv` (if it doesn't exist) that contains all of the necessary depedencies to run.
+The script automatically sets up a `virtualenv` (if it doesn't exist) that contains all of the necessary depedencies to run. 
+
+Simply run the command for the first time and everything will get setup for you:
+
+``` shell
+git clone https://github.com/EncoreTechnologies/orquestaconvert.git
+cd orquestaconvert
+./bin/orquestaconvert.sh --help
+```
+
+## `orquestaconvert.sh` - convert a single workflow and print to stdout
 
 You must specify one or more workflow YAML files to convert as the last arguments to the script.
 
@@ -20,23 +30,29 @@ There are also some options you can use:
 
 ### Examples
 
+#### Convert a single workflow
+
+Convert the `nasa_apod_twitter_post.yaml` workflow from Mistral to Orquesta, using Jinja expressions (the default) in task transition conditions.
+
 ```shell
 ./bin/orquestaconvert.sh ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
 ```
 
-Convert the `nasa_apod_twitter_post.yaml` workflow from Mistral to Orquesta, using Jinja expressions (the default) in task transition conditions.
+#### Convert a workflow, output YAQL expressions
+
+Convert the workflow, using YAQL expressions for new task transition conditions, and skips Orquesta workflow validation. Note that this may generate a workflow that is *neither* a valid Mistral *nor* a valid Orquesta workflow.
 
 ```shell
 ./bin/orquestaconvert.sh -e yaql --force ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
 ```
 
-Convert the workflow, using YAQL expressions for new task transition conditions, and skips Orquesta workflow validation. Note that this may generate a workflow that is *neither* a valid Mistral *nor* a valid Orquesta workflow.
-
-```shell
-./bin/orquestaconvert.sh --validate ./tests/fixtures/mistral/nasa_apod_twitter_post.yaml
-```
+#### Validate an Orquesta workflow
 
 Run Orquesta YAML schema validation on the file. Returns 0 on successful validation, nonzero on unsuccessful validation. Also use the `--verbose` option to explitly print the validation results for the file.
+
+```shell
+./bin/orquestaconvert.sh --validate ./tests/fixtures/orquesta/nasa_apod_twitter_post.yaml
+```
 
 ## `orquestaconvert-pack.sh` - convert all Mistral workflows in a pack
 
@@ -51,29 +67,37 @@ Recognized options are:
 
 ### Examples
 
+#### Convert all workflows in a pack
+
+Attempts to convert all workflows from Mistral to Orquesta, using Jinja expressions in new task transitions (Jinja is the default).
+
 ```shell
 ./bin/orquestaconvert-pack.sh
 ```
 
-Attempts to convert all workflows from Mistral to Orquesta, using Jinja expressions in new task transitions (Jinja is the default).
+#### List Mistral workflows in a pack
+
+Lists remaining Mistral workflows.
 
 ```shell
 ./bin/orquestaconvert-pack.sh --list-workflows mistral-v2
 ```
 
-Lists remaining Mistral workflows.
+#### Convert all workflows in a pack, outputting YAQL expressions
+
+Converts all Mistral workflows (using YAQL expressions when generating task transition conditions) in `mypack/actions` to Orquesta and skips validation. Note that using this option may create workflows that are *neither* valid as Mistral *nor* Orquesta workflows.
 
 ```shell
 ./bin/orquestaconvert-pack.sh --expressions yaql --force --action-dir mypack/actions
 ```
 
-Converts all Mistral workflows (using YAQL expressions when generating task transition conditions) in `mypack/actions` to Orquesta and skips validation. Note that using this option may create workflows that are *neither* valid as Mistral *nor* Orquesta workflows.
+#### Validate all Orquesta workflows in a pack
+
+Explicitly rints the validation results for all Orquesta workflows.
 
 ```shell
 ./bin/orquestaconvert-pack.sh --validate --verbose
 ```
-
-Explicitly rints the validation results for all Orquesta workflows.
 
 # Features
 

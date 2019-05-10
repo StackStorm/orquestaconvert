@@ -1,0 +1,85 @@
+---
+version: '1.0'
+description: Test
+input:
+  - uuid
+tasks:
+  task_1:
+    action: pack.action_1
+    input:
+      foreign_id: <% ctx().uuid %>
+    next:
+      - when: <% succeeded() and (result().result['operations'] + 1) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_1
+      - when: <% succeeded() and (len(result().result['operations'] + 1) = "len function") %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_2
+      - when: <% succeeded() and ((result().result['operations'] + 1) * 4 > 0) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_3
+      - when: <% succeeded() and (0 < 4 * (result().result['operations'] + 1)) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_3
+      - when: <% succeeded() and ((result().result['operations'] + 1)|length) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_4
+      - when: <% succeeded() and (5 + (result().result['operations'] + 1) * 4) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_5
+      - when: <% succeeded() and (result().result['operations'] + 1) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_6
+      - when: '{{ succeeded() and (ctx().operations) }}'
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_7
+      - when: <% succeeded() and (asdfctx(operations)) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_8
+      - when: <% succeeded() and (ctx().operations_NOT) %>
+        publish:
+          - operations: <% result().result['operations'] + 1 %>
+          - namespace: <% result().result['namespace'] %>
+        do:
+          - task_9
+  task_2:
+    action: core.noop
+  task_3:
+    action: core.noop
+  task_4:
+    action: core.noop
+  task_5:
+    action: core.noop
+  task_6:
+    action: core.noop
+  task_7:
+    action: core.noop
+  task_8:
+    action: core.noop

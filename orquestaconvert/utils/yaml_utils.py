@@ -1,6 +1,6 @@
 import ruamel.yaml
 import ruamel.yaml.comments
-import StringIO
+import six
 import yaml
 import yamlloader
 
@@ -32,6 +32,6 @@ def obj_to_yaml(obj, indent=2):
     ruyaml.indent(mapping=indent, sequence=(indent + 2), offset=indent)
     # prevent line-wrap
     ruyaml.width = 99999999999
-    stream = StringIO.StringIO()
+    stream = six.StringIO()
     ruyaml.dump(obj, stream)
     return stream.getvalue()

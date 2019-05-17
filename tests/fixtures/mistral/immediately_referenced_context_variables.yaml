@@ -1,0 +1,41 @@
+version: "2.0"
+
+test_workflow:
+  type: direct
+  description: Test
+  input:
+    - uuid
+  tasks:  
+    task_1:
+      action: pack.action_1
+      # returns result as dict.
+      input:
+        foreign_id: <% $.uuid %>
+      publish:
+        operations: <% task(task_1).result.result['operations'] + 1 %>
+        namespace: <% task(task_1).result.result['namespace'] %>
+      on-success:
+        - task_1: <% ($.operations) %>
+        - task_2: <% len($.operations) = "len function" %>
+        - task_3: <% $.operations * 4 > 0 %>
+        - task_3: <% 0 < 4 * $.operations %>
+        - task_4: <% $.operations|length %>
+        - task_5: <% 5 + $.operations * 4 %>
+        - task_6: <% ctx(operations) %>
+        - task_7: "{{ _.operations }}"
+        - task_8: <% asdfctx(operations) %>
+        - task_9: <% $.operations_NOT %>
+    task_2:
+      action: core.noop
+    task_3:
+      action: core.noop
+    task_4:
+      action: core.noop
+    task_5:
+      action: core.noop
+    task_6:
+      action: core.noop
+    task_7:
+      action: core.noop
+    task_8:
+      action: core.noop

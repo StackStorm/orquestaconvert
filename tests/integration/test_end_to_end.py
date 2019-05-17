@@ -1,3 +1,5 @@
+import warnings
+
 from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.client import Client
@@ -52,3 +54,15 @@ class TestEndToEnd(BaseTestCase):
 
     def test_e2e_convert_dashes_in_task_names_to_underscores(self):
         self.e2e_from_file('dashes_in_task_names.yaml')
+
+    def test_e2e_immediately_referenced_context_variables(self):
+        with warnings.catch_warnings(record=True) as ws:
+            self.e2e_from_file('immediately_referenced_context_variables.yaml')
+
+            self.assertGreater(len(ws), 0)
+            expected_warning = (
+                "The transition \"{{ succeeded() and (ctx().operations) }}\" "
+                "in task_1 references the 'operations' context variable, which "
+                "is published in the same transition. You will need to "
+                "manually convert the operations expression in the transition.")
+            self.assertEqual(expected_warning, ws[0].message.message)

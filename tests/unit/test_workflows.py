@@ -204,7 +204,8 @@ class TestWorkflows(BaseTestCase):
                                       ('{{ _.other }}', ['task2'])])
         orquesta_expr = 'succeeded()'
 
-        result = converter.convert_task_transition_expr(expression_list,
+        result = converter.convert_task_transition_expr('task_name',
+                                                        expression_list,
                                                         {},
                                                         orquesta_expr)
 
@@ -226,7 +227,8 @@ class TestWorkflows(BaseTestCase):
                                       ('{{ _.other }}', ['task2'])])
         orquesta_expr = None
 
-        result = converter.convert_task_transition_expr(expression_list,
+        result = converter.convert_task_transition_expr('task_name',
+                                                        expression_list,
                                                         {},
                                                         orquesta_expr)
 

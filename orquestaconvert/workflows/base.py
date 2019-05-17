@@ -1,5 +1,6 @@
 import re
 import six
+import warnings
 
 import ruamel.yaml
 
@@ -144,7 +145,7 @@ class WorkflowConverter(object):
 
         return simple_transition
 
-    def convert_task_transition_expr(self, expression_list, publish, orquesta_expr):
+    def convert_task_transition_expr(self, task_name, expression_list, publish, orquesta_expr):
         # group all complex expressions by their common expression
         # this way we can keep all of the transitions with the same
         # expressions in the same `when:` condition
@@ -181,11 +182,72 @@ class WorkflowConverter(object):
 
             expr_transition['when'] = o_expr
             if publish:
-                converted_publish = ExpressionConverter.convert_dict(publish).items()
-                expr_transition['publish'] = [{k: v} for k, v in converted_publish]
+                converted_publish = ExpressionConverter.convert_dict(publish)
+                expr_transition['publish'] = [{k: v} for k, v in converted_publish.items()]
+
+                expr_transition['when'] = self.replace_immediately_referenced_variables(task_name,
+                                                                                        expr_transition['when'],
+                                                                                        converted_publish)
+
             expr_transition['do'] = task_list
             transitions.append(expr_transition)
         return transitions
+
+    def replace_immediately_referenced_variables(self, task_name, when_expr, publish_dict):
+        # Check for context variable references that are used in the 'when'
+        # expression
+        variables_in_when = self.extract_context_variables(when_expr)
+
+        variables_in_publish = set(publish_dict.keys())
+
+        immediately_referenced_variables = variables_in_when & variables_in_publish
+
+        # Replace the context variable references in the 'when'
+        # expression with their expression from the 'publish' block
+        for variable in immediately_referenced_variables:
+            # First off, make sure they are the same type of expression,
+            # we don't want to inject a Jinja expression in the middle
+            # of a YAQL expression
+            when_expr_type = ExpressionConverter.expression_type(when_expr)
+            publish_expr_type = ExpressionConverter.expression_type(publish_dict[variable])
+
+            if when_expr_type == publish_expr_type:
+                # Grab the variable expression
+                converter = ExpressionConverter.get_converter(publish_dict[variable])
+                unwrapped_expr = converter.unwrap_expression(publish_dict[variable])
+
+                # Replace double parentheses
+                # ((ctx().variable))    ->  (result().result['variable'] + 1)
+                variable_reference_dp = r'\(\(ctx\(\).{var}\)\)'.format(var=variable)
+                when_expr = re.sub(variable_reference_dp, "({})".format(unwrapped_expr), when_expr)
+
+                # Don't add in parentheses if they already exist
+                # (ctx().variable)      ->  (result().result['variable'] + 1)
+                variable_reference_dp = r'\(ctx\(\).{var}\)'.format(var=variable)
+                when_expr = re.sub(variable_reference_dp, "({})".format(unwrapped_expr), when_expr)
+
+                # Keep surrounding context and add surrounding parentheses
+                # (ctx().variable ...   ->  ((result().result['variable'] + 1) ...
+                # ... ctx().variable)   ->  ... (result().result['variable'] + 1))
+                # ...ctx().variable...  ->  ...(result().result['variable'] + 1)...
+                variable_reference_ep = r'(.)\bctx\(\).{var}\b(.)'.format(var=variable)
+                when_expr = re.sub(variable_reference_ep, r"\1({})\2".format(unwrapped_expr), when_expr)
+
+                # Keep double enclosing internal parentheses
+                # (ctx(variable))  ->  (result().result['variable'] + 1)
+                variable_reference_eip = r'\(ctx\({var}\)\)'.format(var=variable)
+                when_expr = re.sub(variable_reference_eip, "({})".format(unwrapped_expr), when_expr)
+
+            else:
+                warnings.warn("The transition \"{when_expr}\" in {task_name} "
+                              "references the '{variable}' context variable, "
+                              "which is published in the same transition. You "
+                              "will need to manually convert the {variable} "
+                              "expression in the transition."
+                              .format(when_expr=when_expr,
+                                      task_name=task_name,
+                                      variable=variable)),
+        return when_expr
 
     def default_task_transition_map(self):
         transitions = ruamel.yaml.comments.CommentedMap()
@@ -317,7 +379,8 @@ class WorkflowConverter(object):
                 o_task_spec['next'].append(o_trans_simple)
 
             # Create multiple transitions, one for each unique expression
-            o_trans_expr_list = self.convert_task_transition_expr(trans_expr,
+            o_trans_expr_list = self.convert_task_transition_expr(task_name,
+                                                                  trans_expr,
                                                                   data.get('publish'),
                                                                   data['orquesta_expr'])
             o_task_spec['next'].extend(o_trans_expr_list)

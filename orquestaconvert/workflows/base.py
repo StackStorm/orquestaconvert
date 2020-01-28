@@ -23,7 +23,6 @@ WORKFLOW_UNSUPPORTED_ATTRIBUTES = [
 TASK_UNSUPPORTED_ATTRIBUTES = [
     'keep-result',
     'pause-before',
-    'retry',
     'safe-rerun',
     'target',
     'timeout',
@@ -47,6 +46,21 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
     'std.noop': 'core.noop',
 }
 
+# Comparison operators and their inverses (both Jinja and YAQL):
+COMPARISON_OPERATOR_INVERSES = {
+    '!=': '=',
+    '<':  '>=',  # noqa: E241
+    '<=': '>',
+    '=':  '!=',  # noqa: E241
+    '>':  '<=',  # noqa: E241
+    '>=': '<',
+    # YAQL has additional regex matching operators:
+    '=~': '!~',
+    '!~': '=~',
+    # More importantly, Jinja does not have either of those operators, so this
+    # should not inavertently conflict with any Jinja operators
+}
+
 
 # This regex matches Mistral's with-items syntax:
 # variable_name in <% YAQL_EXPRESSION %>
@@ -54,6 +68,9 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
 # variable_name in [static, list]
 WITH_ITEMS_PATTERN = r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$'
 WITH_ITEMS_EXPR_RGX = re.compile(WITH_ITEMS_PATTERN)
+
+RETRY_BREAK_ON_PATTERN = r'^(?P<lhs>[^!~?=<>\s]+)\s*(?P<comp_op>!?=|<=?|>=?|[=!]~)\s*(?P<rhs>[^!~?=<>\s]+)$'
+RETRY_BREAK_ON_RGX = re.compile(RETRY_BREAK_ON_PATTERN)
 
 CTX_PATTERN = r'\bctx\([\'"]*(\w+)[\'"]*\)|\bctx\(\).(\w+)\b'
 CTX_RGX = re.compile(CTX_PATTERN)
@@ -399,6 +416,82 @@ class WorkflowConverter(object):
         kwargs = {'item_vars': self.task_with_item_vars}
         return MixedExpressionConverter.convert_string(o_action, **kwargs)
 
+    def _get_inverse_comparison_operator(self, operator):
+        # Should probably push this into the converters themselves,
+        # but this will suffice for now
+        # Convert and invert *simple* YAQL comparisons, since most continue-on's will
+        # likely be simple comparisons
+        return COMPARISON_OPERATOR_INVERSES[operator]
+
+    def convert_retry(self, m_retry, task_name, force=False):
+        # Convert 'retry' specification
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   break-on: <% $.my_var = true %>  # also continue-on, but not both
+        #
+        # should produce the following in orquesta
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   when: <% ctx().my_var != true %>
+        #
+        # Note that the 'when' expression is inverted/negated
+        o_retry = ruamel.yaml.comments.CommentedMap()
+        if m_retry.get('count'):
+            o_retry['count'] = m_retry['count']
+        if m_retry.get('delay'):
+            o_retry['delay'] = m_retry['delay']
+
+        # Check for both and bail early
+        if m_retry.get('continue-on') and m_retry.get('break-on'):
+            raise NotImplementedError("Cannot convert \"retry\" spec with both a \"break-on\" and "
+                                      "\"continue-on\" attributes in the \"{task_name}\" task."
+                                      .format(task_name=task_name))
+        elif m_retry.get('continue-on') or m_retry.get('break-on'):
+            expr = m_retry.get('continue-on') or m_retry.get('break-on')
+
+            o_when_kwargs = {}
+            converter = ExpressionConverter.get_converter(expr)
+            if converter:
+                expr = converter.unwrap_expression(expr)
+                expr = converter.convert_string(expr)
+
+                comp_op_match = RETRY_BREAK_ON_RGX.match(expr)
+
+                if comp_op_match:
+                    inv_op = self._get_inverse_comparison_operator(comp_op_match.group('comp_op'))
+                    expr = '{lhs} {op} {rhs}'.format(
+                        lhs=comp_op_match.group('lhs'),
+                        op=inv_op,
+                        rhs=comp_op_match.group('rhs'))
+                elif issubclass(converter, YaqlExpressionConverter):
+                    # For YAQL we can also simply do 'not (expr)'
+                    expr = 'not ({expr})'.format(expr=expr)
+                elif force:
+                    docs_link = 'https://docs.stackstorm.com/latest/orquesta/languages/orquesta.html#task-retry-model'  # noqa: E501
+                    warnings.warn("The expression for the \"when\" attribute in the \"retry\" "
+                                  "specification for the \"{task_name}\" task is too complex "
+                                  "to be converted automatically. Please convert that expression "
+                                  "manually, see {docs_link} for more information."
+                                  .format(task_name=task_name, docs_link=docs_link))
+                    o_when_kwargs['comment'] = ("<-- manually invert expression, see {docs_link}"
+                                                .format(docs_link=docs_link))
+                else:
+                    raise NotImplementedError("Cannot convert \"retry\" spec in the "
+                                              "\"{task_name}\" task with a complex Jinja "
+                                              "expression. Please rerun with the --force flag to "
+                                              "forcibly convert the workflow, and then convert "
+                                              "the expression manually."
+                                              .format(task_name=task_name))
+
+                expr = converter.wrap_expression(expr)
+            o_retry.insert(len(o_retry.keys()), 'when', expr, **o_when_kwargs)
+
+        return o_retry
+
     def convert_input(self, input_):
         kwargs = {'item_vars': self.task_with_item_vars}
         return MixedExpressionConverter.convert_dict(input_, **kwargs)
@@ -529,6 +622,10 @@ class WorkflowConverter(object):
 
             if m_task_spec.get('action'):
                 o_task_spec['action'] = self.convert_action(m_task_spec['action'])
+
+            if m_task_spec.get('retry'):
+                o_task_spec['retry'] = self.convert_retry(m_task_spec['retry'], task_name,
+                                                          force=force)
 
             if m_task_spec.get('join'):
                 o_task_spec['join'] = m_task_spec['join']

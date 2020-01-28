@@ -80,9 +80,10 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         err = self.stderr.getvalue()
         self.assertIn("ERROR: Unable to convert all Mistral workflows.\n", err)
         self.assertIn(
-            "ISSUE: Task 'task1' contains an attribute 'retry' that is not supported in orquesta.\n"  # noqa: E501
+            "Cannot convert \"retry\" spec with both a \"break-on\" and \"continue-on\" "
+            "attributes in the \"test-error-undo-retry\" task.\n"
             "Affected files:\n"
-            "  - {m_wfs_dir}/mistral-fail-retry.yaml\n"
+            "  - {m_wfs_dir}/mistral-fail-retry-continue-and-break-on.yaml\n"
             "\n".format(m_wfs_dir=self.m_wfs_dir),
             err)
 

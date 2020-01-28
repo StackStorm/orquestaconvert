@@ -1,9 +1,9 @@
 ---
-name: mistral-fail-retry
-description: A sample workflow used to test the cancel feature.
+name: mistral-retry-continue-on
+description: A sample workflow used to test the retry feature with continue-on.
 pack: examples
 runner_type: mistral-v2
-entry_point: workflows/mistral-fail-retry.yaml
+entry_point: workflows/mistral-retry-continue-on.yaml
 enabled: true
 parameters:
     tempfile:

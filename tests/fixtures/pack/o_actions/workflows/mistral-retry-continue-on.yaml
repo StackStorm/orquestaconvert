@@ -1,0 +1,23 @@
+---
+version: '1.0'
+description: >
+  A sample workflow that demonstrates retry with count, delay, and continue-on.
+tasks:
+  init:
+    action: core.local cmd="rm -f /tmp/done"
+    next:
+      - when: <% succeeded() %>
+        do:
+          - test_error_undo_retry
+  test_error_undo_retry:
+    action: core.local cmd="echo 'Do something useful here.';"
+    retry:
+      count: 30
+      delay: 1
+      when: <% ctx().foo != 'continue' %>
+    next:
+      - when: <% succeeded() %>
+        do:
+          - delete_file
+  delete_file:
+    action: core.local cmd="rm -f /tmp/done"

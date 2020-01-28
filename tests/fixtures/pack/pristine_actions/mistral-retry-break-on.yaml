@@ -1,0 +1,14 @@
+---
+name: mistral-retry-break-on
+description: A sample workflow used to test the retry feature with break-on.
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-retry-break-on.yaml
+enabled: true
+parameters:
+    tempfile:
+        type: string
+        required: true
+    message:
+        type: string
+        required: true

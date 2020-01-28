@@ -1,0 +1,21 @@
+version: '2.0'
+
+examples.mistral-retry-continue-on:
+    description: >
+        A sample workflow that demonstrates retry with count, delay, and continue-on.
+    type: direct
+    tasks:
+        init:
+            action: core.local cmd="rm -f /tmp/done"
+            on-success:
+                - test-error-undo-retry
+        test-error-undo-retry:
+            retry:
+                count: 30
+                delay: 1
+                continue-on: <% $.foo = 'continue' %>
+            action: core.local cmd="echo 'Do something useful here.';"
+            on-success:
+                - delete-file
+        delete-file:
+            action: core.local cmd="rm -f /tmp/done"

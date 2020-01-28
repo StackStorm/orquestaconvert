@@ -1,7 +1,7 @@
 version: '2.0'
 
-examples.mistral-fail-retry:
-    description: A sample workflow used to test the cancellation feature.
+examples.mistral-retry:
+    description: A sample workflow used to test the retry feature.
     type: direct
     input:
         - tempfile

@@ -1,0 +1,24 @@
+---
+version: '1.0'
+description: >
+  A sample workflow that demonstrates how to handle rollback and retry on error.  In this example, the workflow will error and then continue to retry until the file  /tmp/done exists. A parallel task will wait for some time before creating the
+  file. When completed, /tmp/done will be deleted.
+tasks:
+  init:
+    action: core.local cmd="rm -f /tmp/done"
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - test_error_undo_retry
+  test_error_undo_retry:
+    action: core.local cmd="echo 'Do something useful here.';"
+    retry:
+      count: 30
+      delay: 1
+      when: <% ctx().foo = 'continue' %>
+    next:
+      - when: '{{ succeeded() }}'
+        do:
+          - delete_file
+  delete_file:
+    action: core.local cmd="rm -f /tmp/done"

@@ -11,6 +11,7 @@ circleci.test_with_items:
   tasks:
     random_task:
       action: core.noop
+      pause-before: yes
       with-items: i in <% $.items %>
       concurrency: 4
       retry:

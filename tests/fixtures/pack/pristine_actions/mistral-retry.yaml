@@ -1,0 +1,14 @@
+---
+name: mistral-retry
+description: A sample workflow used to test the retry feature.
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-retry.yaml
+enabled: true
+parameters:
+  tempfile:
+    type: string
+    required: true
+  message:
+    type: string
+    required: true

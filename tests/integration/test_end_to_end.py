@@ -1,3 +1,4 @@
+import six
 import warnings
 
 from tests.base_test_case import BaseTestCase
@@ -65,4 +66,7 @@ class TestEndToEnd(BaseTestCase):
                 "in task_1 references the 'operations' context variable, which "
                 "is published in the same transition. You will need to "
                 "manually convert the operations expression in the transition.")
-            self.assertEqual(expected_warning, ws[0].message.message)
+            if six.PY2:
+                self.assertEqual(expected_warning, ws[0].message.message)
+            else:
+                self.assertEqual(expected_warning, str(ws[0].message))

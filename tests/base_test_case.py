@@ -158,5 +158,8 @@ class BasePackClientRunTestCase(BaseCLITestCase):
         dirhash = {}
         for dirf in files:
             with open(os.path.join(directory, dirf), 'r') as f:
-                dirhash[dirf] = hashlib.sha256(f.read()).hexdigest()
+                fdata = f.read()
+                if not six.PY2:
+                    fdata = fdata.encode('utf-8')
+                dirhash[dirf] = hashlib.sha256(fdata).hexdigest()
         return dirhash

@@ -1,3 +1,5 @@
+import re
+
 from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
@@ -396,11 +398,12 @@ class TestWorkflows(BaseTestCase):
         with self.assertRaises(NotImplementedError) as ctx_m:
             converter.convert_task_transitions("tsk_name", task_spec, expr_converter, set())
 
-        self.assertEqual("Task 'tsk_name' contains one or more keys (common_key_2, common_key_3) "
-                         "in both publish and publish-on-error dictionaries that have different "
-                         "values. Please either remove the common keys, or ensure that the "
-                         "values of any common keys are the same.",
-                         str(ctx_m.exception))
+        rgx = re.compile(r"Task 'tsk_name' contains one or more keys "
+                         r"\((?:common_key_2, common_key_3|common_key_3, common_key_2)\) "
+                         r"in both publish and publish-on-error dictionaries that have different "
+                         r"values\. Please either remove the common keys, or ensure that the "
+                         r"values of any common keys are the same\.")
+        self.assertRegex(str(ctx_m.exception), rgx)
 
     def test_convert_with_items(self):
         wi = {

@@ -61,7 +61,7 @@ ORQUESTA_DIR ?= $(VIRTUALENV_DIR)/orquesta
 VIRTUALENV_FLAGS := --no-site-packages
 # https://stackoverflow.com/a/22105036/1134951
 PYV=$(shell python -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)");
-ifneq ($(PYV),2.7)
+ifeq ($(PYV),2.7)
     VIRTUALENV_FLAGS += -p python2.7
 endif
 

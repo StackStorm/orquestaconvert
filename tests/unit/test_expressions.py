@@ -13,26 +13,26 @@ class TestExpressions(BaseTestCase):
     def test_convert_expr_bool(self):
         expr_bool = True
         result = ExpressionConverter.convert(expr_bool)
-        self.assertEquals(result, True)
+        self.assertEqual(result, True)
         expr_bool = False
         result = ExpressionConverter.convert(expr_bool)
-        self.assertEquals(result, False)
+        self.assertEqual(result, False)
 
     def test_convert_expr_null(self):
         expr_none = None
         result = ExpressionConverter.convert(expr_none)
-        self.assertEquals(result, None)
+        self.assertEqual(result, None)
 
     def test_convert_expr_int(self):
         expr_int = 0
         result = ExpressionConverter.convert(expr_int)
-        self.assertEquals(result, 0)
+        self.assertEqual(result, 0)
         expr_int = 100
         result = ExpressionConverter.convert(expr_int)
-        self.assertEquals(result, 100)
+        self.assertEqual(result, 100)
         expr_int = -1
         result = ExpressionConverter.convert(expr_int)
-        self.assertEquals(result, -1)
+        self.assertEqual(result, -1)
 
     def test_convert_expr_obj_with_warning(self):
         expr_obj = object()
@@ -41,37 +41,37 @@ class TestExpressions(BaseTestCase):
             r"results may not be accurate.")
         with self.assertWarnsRegex(SyntaxWarning, expected_warning_regex):
             result = ExpressionConverter.convert(expr_obj)
-        self.assertEquals(result, expr_obj)
+        self.assertEqual(result, expr_obj)
 
     def test_convert_expr_dict(self):
         expr_dict = {"test": "{{ _.value }}"}
         result = ExpressionConverter.convert(expr_dict)
-        self.assertEquals(result, {"test": "{{ ctx().value }}"})
+        self.assertEqual(result, {"test": "{{ ctx().value }}"})
 
     def test_convert_expr_list(self):
         expr_list = ["test", "{{ _.value }}"]
         result = ExpressionConverter.convert(expr_list)
-        self.assertEquals(result, ["test", "{{ ctx().value }}"])
+        self.assertEqual(result, ["test", "{{ ctx().value }}"])
 
     def test_convert_expr_string(self):
         expr_dict = "{{ _.value }}"
         result = ExpressionConverter.convert(expr_dict)
-        self.assertEquals(result, "{{ ctx().value }}")
+        self.assertEqual(result, "{{ ctx().value }}")
 
     def test_convert_no_expression(self):
         expr = "data"
         result = ExpressionConverter.convert(expr)
-        self.assertEquals(result, "data")
+        self.assertEqual(result, "data")
 
     def test_expression_type_jinja(self):
         expr = "{{ _.test }}"
         result = ExpressionConverter.expression_type(expr)
-        self.assertEquals(result, 'jinja')
+        self.assertEqual(result, 'jinja')
 
     def test_expression_type_yaql(self):
         expr = "<% $.test %>"
         result = ExpressionConverter.expression_type(expr)
-        self.assertEquals(result, 'yaql')
+        self.assertEqual(result, 'yaql')
 
     def test_expression_type_none(self):
         expr = "test"
@@ -96,17 +96,17 @@ class TestExpressions(BaseTestCase):
     def test_unwrap_expression_jinja(self):
         expr = "{{ _.test }}"
         result = ExpressionConverter.unwrap_expression(expr)
-        self.assertEquals(result, '_.test')
+        self.assertEqual(result, '_.test')
 
     def test_unwrap_expression_yaql(self):
         expr = "<% $.test %>"
         result = ExpressionConverter.unwrap_expression(expr)
-        self.assertEquals(result, '$.test')
+        self.assertEqual(result, '$.test')
 
     def test_unwrap_expression_none(self):
         expr = "test"
         result = ExpressionConverter.unwrap_expression(expr)
-        self.assertEquals(result, 'test')
+        self.assertEqual(result, 'test')
 
     def test_convert_dict(self):
         expr = {
@@ -114,7 +114,7 @@ class TestExpressions(BaseTestCase):
             "yaql_str": "<% $.test_yaql %>",
         }
         result = ExpressionConverter.convert_dict(expr)
-        self.assertEquals(result, {
+        self.assertEqual(result, {
             "jinja_str": "{{ ctx().test_jinja }}",
             "yaql_str": "<% ctx().test_yaql %>",
         })
@@ -128,7 +128,7 @@ class TestExpressions(BaseTestCase):
             ]
         }
         result = ExpressionConverter.convert_dict(expr)
-        self.assertEquals(result, {
+        self.assertEqual(result, {
             "expr_list":
             [
                 "{{ ctx().a }}",
@@ -145,7 +145,7 @@ class TestExpressions(BaseTestCase):
             }
         }
         result = ExpressionConverter.convert_dict(expr)
-        self.assertEquals(result, {
+        self.assertEqual(result, {
             "expr_dict":
             {
                 "nested_jinja": "{{ ctx().a }}",
@@ -159,7 +159,7 @@ class TestExpressions(BaseTestCase):
             "<% $.test_yaql %>",
         ]
         result = ExpressionConverter.convert_list(expr)
-        self.assertEquals(result, [
+        self.assertEqual(result, [
             "{{ ctx().test_jinja }}",
             "<% ctx().test_yaql %>",
         ])
@@ -172,7 +172,7 @@ class TestExpressions(BaseTestCase):
             ]
         ]
         result = ExpressionConverter.convert_list(expr)
-        self.assertEquals(result, [
+        self.assertEqual(result, [
             "{{ ctx().a }}",
             [
                 "<% ctx().a %>",
@@ -187,7 +187,7 @@ class TestExpressions(BaseTestCase):
             }
         ]
         result = ExpressionConverter.convert_list(expr)
-        self.assertEquals(result, [
+        self.assertEqual(result, [
             {
                 "nested_jinja": "{{ ctx().a }}",
                 "nested_yaql": "<% ctx().a %>",
@@ -197,14 +197,14 @@ class TestExpressions(BaseTestCase):
     def test_convert_string_other(self):
         expr = "test some raw string"
         result = ExpressionConverter.convert_string(expr)
-        self.assertEquals(result, "test some raw string")
+        self.assertEqual(result, "test some raw string")
 
     def test_convert_string_jinja(self):
         expr = "{{ _.test }}"
         result = ExpressionConverter.convert_string(expr)
-        self.assertEquals(result, "{{ ctx().test }}")
+        self.assertEqual(result, "{{ ctx().test }}")
 
     def test_convert_string_yaql(self):
         expr = "<% $.test %>"
         result = ExpressionConverter.convert_string(expr)
-        self.assertEquals(result, "<% ctx().test %>")
+        self.assertEqual(result, "<% ctx().test %>")

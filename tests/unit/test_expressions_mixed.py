@@ -11,13 +11,13 @@ class TestExpressionsMixed(BaseTestCase):
     def test_convert_string(self):
         s = "ABC {{ _.test }}"
         result = MixedExpressionConverter.convert(s)
-        self.assertEquals(result, "ABC {{ ctx().test }}")
+        self.assertEqual(result, "ABC {{ ctx().test }}")
 
     def test_convert_string_items(self):
         s = "i in {{ _.test1 }}<% $.test2 %>{{ _.test3 }}<% $.test4 %>"
         result = MixedExpressionConverter.convert(s, item_vars=['test1', 'test2'])
         expected = "i in {{ item(test1) }}<% item(test2) %>{{ ctx().test3 }}<% ctx().test4 %>"
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_dict(self):
         data = {
@@ -29,7 +29,7 @@ class TestExpressionsMixed(BaseTestCase):
             "test2": "FOOBAR <% ctx().baz %>",
         }
         result = MixedExpressionConverter.convert(data)
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_convert_list(self):
         data = [
@@ -41,7 +41,7 @@ class TestExpressionsMixed(BaseTestCase):
             "FOOBAR <% ctx().baz %>",
         ]
         result = MixedExpressionConverter.convert(data)
-        self.assertEquals(expected, result)
+        self.assertEqual(expected, result)
 
     def test_convert_dict_of_lists_of_dicts(self):
         data = {
@@ -89,4 +89,4 @@ class TestExpressionsMixed(BaseTestCase):
             r"results may not be accurate.")
         with self.assertWarnsRegex(SyntaxWarning, expected_warning_regex):
             result = MixedExpressionConverter.convert(expr_obj)
-        self.assertEquals(result, expr_obj)
+        self.assertEqual(result, expr_obj)

@@ -17,7 +17,7 @@ class TestYamlUtils(BaseTestCase):
                     "  - x\n"
                     "  - y\n")
         result = yaml_utils.yaml_to_obj(yaml_str)
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('test_dict', OrderedMap([
                 ('a', 'b')
             ])),
@@ -27,8 +27,8 @@ class TestYamlUtils(BaseTestCase):
     def test_read_yaml(self):
         fixture_path = self.get_fixture_path('yaml/simple.yaml')
         data, ruamel_data = yaml_utils.read_yaml(fixture_path)
-        self.assertEquals(data, {'test_dict': {'a': True}})
-        self.assertEquals(data, OrderedMap([
+        self.assertEqual(data, {'test_dict': {'a': True}})
+        self.assertEqual(data, OrderedMap([
             ('test_dict', OrderedMap([
                 ('a', True)
             ]))
@@ -41,12 +41,12 @@ class TestYamlUtils(BaseTestCase):
             ]))
         ])
         result = yaml_utils.obj_to_yaml(ruamel_data)
-        self.assertEquals(result, self.get_fixture_content('yaml/simple.yaml'))
+        self.assertEqual(result, self.get_fixture_content('yaml/simple.yaml'))
 
     def test_obj_to_yaml_dict(self):
         ruamel_data = {'test_dict': {'a': True}}
         result = yaml_utils.obj_to_yaml(ruamel_data)
-        self.assertEquals(result, self.get_fixture_content('yaml/simple.yaml'))
+        self.assertEqual(result, self.get_fixture_content('yaml/simple.yaml'))
 
     def test_obj_to_yaml_no_line_wrap(self):
         ruamel_data = {
@@ -55,4 +55,4 @@ class TestYamlUtils(BaseTestCase):
                     " to do that and just keep this one crazy long line.")
         }
         result = yaml_utils.obj_to_yaml(ruamel_data)
-        self.assertEquals(result, self.get_fixture_content('yaml/no_line_wrap.yaml'))
+        self.assertEqual(result, self.get_fixture_content('yaml/no_line_wrap.yaml'))

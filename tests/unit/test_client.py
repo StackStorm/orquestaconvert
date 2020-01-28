@@ -19,7 +19,7 @@ class TestClient(BaseCLITestCase):
 
         # run
         exit_status = Client().run(args + [fixture_path], self.stdout)
-        self.assertEquals(exit_status, 0)
+        self.assertEqual(exit_status, 0)
 
         # read expected data
         if not expected_filename:

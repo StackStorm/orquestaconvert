@@ -80,8 +80,9 @@ class PackClientRunTestCase(BasePackClientRunTestCase):
         err = self.stderr.getvalue()
         self.assertIn("ERROR: Unable to convert all Mistral workflows.\n", err)
         self.assertIn(
-            "Cannot convert \"retry\" spec with both a \"break-on\" and \"continue-on\" "
-            "attributes in the \"test-error-undo-retry\" task.\n"
+            "Cannot convert continue-on (<% $.foo = 'continue' %>) and break-on "
+            "({{{{ _.bar = \"BREAK\" }}}}) expressions that are different types in task "
+            "'test-error-undo-retry'\n"
             "Affected files:\n"
             "  - {m_wfs_dir}/mistral-fail-retry-continue-and-break-on.yaml\n"
             "\n".format(m_wfs_dir=self.m_wfs_dir),

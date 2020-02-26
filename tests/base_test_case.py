@@ -42,6 +42,7 @@ ACTION_PASSING_FILES = [
     'mistral-retry.yaml',
     'mistral-retry-continue-on.yaml',
     'mistral-retry-break-on.yaml',
+    'mistral-retry-continue-and-break-on.yaml',
 ]
 
 

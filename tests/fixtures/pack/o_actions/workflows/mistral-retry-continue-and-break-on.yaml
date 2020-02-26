@@ -1,7 +1,8 @@
 ---
 version: '1.0'
 description: >
-  A sample workflow that demonstrates retry with count, delay, and break-on.
+  A sample workflow that demonstrates how to handle rollback and retry on error.  In this example, the workflow will error and then continue to retry until the file  /tmp/done exists. A parallel task will wait for some time before creating the
+  file. When completed, /tmp/done will be deleted.
 tasks:
   init:
     action: core.local cmd="rm -f /tmp/done"
@@ -14,7 +15,7 @@ tasks:
     retry:
       count: 30
       delay: 1
-      when: <% failed() and not (ctx().bar = 'BREAK') %>
+      when: <% (succeeded() and (ctx().foo = 'continue')) or (failed() and not (ctx().bar = 'BREAK')) %>
     next:
       - when: <% succeeded() %>
         do:

@@ -14,7 +14,7 @@ tasks:
     retry:
       count: 30
       delay: 1
-      when: <% ctx().foo != 'continue' %>
+      when: <% succeeded() and (ctx().foo = 'continue') %>
     next:
       - when: <% succeeded() %>
         do:

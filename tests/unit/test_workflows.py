@@ -4,7 +4,7 @@ from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
 from orquestaconvert.expressions.yaql import YaqlExpressionConverter
-from orquestaconvert.workflows.base import WorkflowConverter, COMPARISON_OPERATOR_INVERSES
+from orquestaconvert.workflows.base import WorkflowConverter
 
 import ruamel.yaml
 OrderedMap = ruamel.yaml.comments.CommentedMap
@@ -531,7 +531,7 @@ class TestWorkflows(BaseTestCase):
         with self.assertRaises(NotImplementedError):
             converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
 
-    def test_retry(self):
+    def test_simple_retry(self):
         retry = {
             'count': 30,
             'delay': 5,
@@ -545,117 +545,54 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(expected, actual)
 
     def test_retry_continue_on(self):
-        # unittest2's alternative to @pytest.mark.parametrize
-        # https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests  # noqa: E501
-        for operator in COMPARISON_OPERATOR_INVERSES:
-            with self.subTest(operator=operator):
-                retry = {
-                    'count': 30,
-                    'delay': 5,
-                    'continue-on': '<% $.foo {op} "continue" %>'.format(op=operator),
-                }
-                converter = WorkflowConverter()
-                actual = converter.convert_retry(retry, 'retry_task_continue_on')
-                inverse_operator = converter._get_inverse_comparison_operator(operator)
-                expected = OrderedMap([
-                    ('count', 30),
-                    ('delay', 5),
-                    ('when', '<% ctx().foo {op} "continue" %>'.format(op=inverse_operator)),
-                ])
-                self.assertEqual(expected, actual)
-
-    def test_retry_break_on_simple_jinja_expression(self):
-        # unittest2's alternative to @pytest.mark.parametrize
-        # https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests  # noqa: E501
-        for operator in COMPARISON_OPERATOR_INVERSES:
-            with self.subTest(operator=operator):
-                retry = {
-                    'count': 30,
-                    'delay': 5,
-                    # We have to double up on curly brackets here because .format() coalesces '{{'
-                    # to '{', and we need the resulting string to have two of each:
-                    # '{{ _.bar {op} "break" }}'
-                    'break-on': '{{{{ _.bar {op} "break" }}}}'.format(op=operator),
-                }
-                converter = WorkflowConverter()
-                actual = converter.convert_retry(retry, 'retry_task_break_on')
-                inverse_operator = converter._get_inverse_comparison_operator(operator)
-                expected = OrderedMap([
-                    ('count', 30),
-                    ('delay', 5),
-                    # We have to double up on curly brackets here because .format() coalesces '{{'
-                    # to '{', and we need the resulting string to have two of each:
-                    # '{{ _.bar {op} "break" }}'
-                    ('when', '{{{{ ctx().bar {op} "break" }}}}'.format(op=inverse_operator)),
-                ])
-                self.assertEqual(expected, actual)
-
-    def test_retry_break_on_with_simple_yaql_expression(self):
-        # unittest2's alternative to @pytest.mark.parametrize
-        # https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests  # noqa: E501
-        for operator in COMPARISON_OPERATOR_INVERSES:
-            with self.subTest(operator=operator):
-                retry = {
-                    'count': 30,
-                    'delay': 5,
-                    'break-on': '<% $.bar {op} "break" %>'.format(op=operator),
-                }
-                converter = WorkflowConverter()
-                actual = converter.convert_retry(retry, 'retry_task_break_on')
-                inverse_operator = converter._get_inverse_comparison_operator(operator)
-                expected = OrderedMap([
-                    ('count', 30),
-                    ('delay', 5),
-                    ('when', '<% ctx().bar {op} "break" %>'.format(op=inverse_operator)),
-                ])
-                self.assertEqual(expected, actual)
-
-    def test_retry_break_on_with_complex_yaql_expression(self):
         retry = {
             'count': 30,
             'delay': 5,
-            'break-on': '<% $.bar < "break" and $.foo >= "unbreak" %>',
+            'continue-on': '<% $.foo = "continue" %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task_continue_on')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+            ('when', '<% succeeded() and (ctx().foo = "continue") %>'),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_invalid_retry_continue_on_expression(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': 'one fish, two fish, red fish, blue fish',
+        }
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert_retry(retry, 'retry_task_continue_on')
+
+    def test_retry_break_on(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'break-on': '<% $.foo = "break" %>',
         }
         converter = WorkflowConverter()
         actual = converter.convert_retry(retry, 'retry_task_break_on')
         expected = OrderedMap([
             ('count', 30),
             ('delay', 5),
-            ('when', '<% not (ctx().bar < "break" and ctx().foo >= "unbreak") %>'),
+            ('when', '<% failed() and not (ctx().foo = "break") %>'),
         ])
-        # Can't really check for the comment unless we serialize the result ourselves
         self.assertEqual(expected, actual)
 
-    def test_retry_break_on_with_complex_jinja_expression(self):
+    def test_invalid_retry_break_on_expression(self):
         retry = {
             'count': 30,
             'delay': 5,
-            'break-on': '{{ _.bar in "break" }}',
+            'break-on': 'and the cat in the hat knows a lot about that',
         }
         converter = WorkflowConverter()
-        expected_exception_rgx = re.compile(r'.*retry_task_break_on_with_jinja'
-                                            r'.*rerun with the --force flag'
-                                            r'.*convert the expression manually.*')
-        with self.assertRaisesRegex(NotImplementedError, expected_exception_rgx):
-            converter.convert_retry(retry, 'retry_task_break_on_with_jinja')
-
-    def test_retry_break_on_with_complex_jinja_expression_and_force(self):
-        retry = {
-            'count': 30,
-            'delay': 5,
-            'break-on': '{{ _.bar in "break" }}',
-        }
-        converter = WorkflowConverter()
-        expected_warning_rgx = re.compile(r'.*docs\.stackstorm\.com.*')
-        with self.assertWarnsRegex(UserWarning, expected_warning_rgx):
-            actual = converter.convert_retry(retry, 'retry_task_break_on', force=True)
-        expected = OrderedMap([
-            ('count', 30),
-            ('delay', 5),
-            ('when', '{{ ctx().bar in "break" }}'),
-        ])
-        # Can't really check for the comment unless we serialize the result ourselves
-        self.assertEqual(expected, actual)
+        with self.assertRaises(NotImplementedError):
+            converter.convert_retry(retry, 'retry_task_break_on')
 
     def test_retry_continue_and_break_on(self):
         retry = {
@@ -665,8 +602,25 @@ class TestWorkflows(BaseTestCase):
             'break-on': '<% $.foo = "break" %>',
         }
         converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task_continue_and_break_on')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+            ('when', '<% (succeeded() and (ctx().foo = "continue")) or '
+                     '(failed() and not (ctx().foo = "break")) %>'),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_retry_continue_and_break_on_different_expression_types(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': '<% $.foo = "continue" %>',
+            'break-on': '{{ _.foo = "break" }}',
+        }
+        converter = WorkflowConverter()
         with self.assertRaises(NotImplementedError):
-            converter.convert_retry(retry, 'retry_task_continue_and_break_on')
+            converter.convert_retry(retry, 'different_expression_types')
 
     def test_convert_tasks(self):
         converter = WorkflowConverter()

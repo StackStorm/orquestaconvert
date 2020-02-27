@@ -23,7 +23,6 @@ WORKFLOW_UNSUPPORTED_ATTRIBUTES = [
 TASK_UNSUPPORTED_ATTRIBUTES = [
     'keep-result',
     'pause-before',
-    'retry',
     'safe-rerun',
     'target',
     'timeout',
@@ -399,6 +398,91 @@ class WorkflowConverter(object):
         kwargs = {'item_vars': self.task_with_item_vars}
         return MixedExpressionConverter.convert_string(o_action, **kwargs)
 
+    def convert_retry(self, m_retry, task_name):
+        # Convert 'retry' specification
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   break-on: <% $.my_var = 'break' %>
+        #
+        # should produce the following in orquesta
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   when: <% failed() and not (ctx().my_var = 'break') %>
+        #
+        # (note that the 'when' expression is inverted/negated from break-on)
+        #
+        # and this:
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   continue-on: <% $.my_var = 'continue' %>
+        #
+        # should produce the following in orquesta
+        #
+        # retry:
+        #   count: 10
+        #   delay: 20
+        #   when: <% succeeded() and (ctx().my_var = 'continue') %>
+        #
+        o_retry = ruamel.yaml.comments.CommentedMap()
+        if m_retry.get('count'):
+            o_retry['count'] = m_retry['count']
+        if m_retry.get('delay'):
+            o_retry['delay'] = m_retry['delay']
+
+        # Check for both and bail early
+        with_continue = None
+        with_break = None
+        if m_retry.get('continue-on'):
+            continue_expr = m_retry['continue-on']
+            continue_converter = ExpressionConverter.get_converter(continue_expr)
+            if not continue_converter:
+                raise NotImplementedError("Could not convert continue-on expression: {converter} "
+                                          "in task '{task_name}'"
+                                          .format(converter=continue_converter,
+                                                  task_name=task_name))
+            continue_expr = continue_converter.unwrap_expression(continue_expr)
+            continue_expr = continue_converter.convert_string(continue_expr)
+            with_continue = 'succeeded() and ({continue_expr})'.format(continue_expr=continue_expr)
+
+        if m_retry.get('break-on'):
+            break_expr = m_retry['break-on']
+            break_converter = ExpressionConverter.get_converter(break_expr)
+            if not break_converter:
+                raise NotImplementedError("Could not convert break-on expression: {converter} "
+                                          "in task '{task_name}'"
+                                          .format(converter=break_converter,
+                                                  task_name=task_name))
+            break_expr = break_converter.unwrap_expression(break_expr)
+            break_expr = break_converter.convert_string(break_expr)
+            with_break = 'failed() and not ({break_expr})'.format(break_expr=break_expr)
+
+        if with_continue and with_break:
+            # The converters are classes themselves
+            if continue_converter is not break_converter:
+                raise NotImplementedError("Cannot convert continue-on ({continue_on}) and "
+                                          "break-on ({break_on}) expressions that are different "
+                                          "types in task '{task_name}'"
+                                          .format(continue_on=m_retry['continue-on'],
+                                                  break_on=m_retry['break-on'],
+                                                  task_name=task_name))
+
+            with_expr = ('({with_continue}) or ({with_break})'
+                         .format(with_continue=with_continue, with_break=with_break))
+
+            o_retry['when'] = continue_converter.wrap_expression(with_expr)
+        elif m_retry.get('continue-on'):
+            o_retry['when'] = continue_converter.wrap_expression(with_continue)
+        elif m_retry.get('break-on'):
+            o_retry['when'] = break_converter.wrap_expression(with_break)
+
+        return o_retry
+
     def convert_input(self, input_):
         kwargs = {'item_vars': self.task_with_item_vars}
         return MixedExpressionConverter.convert_dict(input_, **kwargs)
@@ -529,6 +613,9 @@ class WorkflowConverter(object):
 
             if m_task_spec.get('action'):
                 o_task_spec['action'] = self.convert_action(m_task_spec['action'])
+
+            if m_task_spec.get('retry'):
+                o_task_spec['retry'] = self.convert_retry(m_task_spec['retry'], task_name)
 
             if m_task_spec.get('join'):
                 o_task_spec['join'] = m_task_spec['join']

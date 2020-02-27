@@ -1,0 +1,14 @@
+---
+name: mistral-retry-continue-on
+description: A sample workflow used to test the retry feature with continue-on.
+pack: examples
+runner_type: orquesta
+entry_point: workflows/mistral-retry-continue-on.yaml
+enabled: true
+parameters:
+  tempfile:
+    type: string
+    required: true
+  message:
+    type: string
+    required: true

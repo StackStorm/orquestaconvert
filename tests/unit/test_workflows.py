@@ -1,3 +1,5 @@
+import re
+
 from tests.base_test_case import BaseTestCase
 
 from orquestaconvert.expressions.jinja import JinjaExpressionConverter
@@ -28,17 +30,17 @@ class TestWorkflows(BaseTestCase):
             {"key3": "expr"},
         ]
         simple, expr = converter.group_task_transitions(transitions_list)
-        self.assertEquals(simple, ["simple transition string",
-                                   "another simple transition string"])
+        self.assertEqual(simple, ["simple transition string",
+                                  "another simple transition string"])
         expected = OrderedMap([("expr", ["key", "key3"]),
                                ("expression", ["key2"])])
-        self.assertEquals(expr, expected)
+        self.assertEqual(expr, expected)
 
     def test_group_task_string_transition(self):
         converter = WorkflowConverter()
         transitions_string = 'next_task'
         simple, expr = converter.group_task_transitions(transitions_string)
-        self.assertEquals(simple, ['next_task'])
+        self.assertEqual(simple, ['next_task'])
 
     def test_group_task_transitions_raises_bad_type(self):
         converter = WorkflowConverter()
@@ -52,9 +54,9 @@ class TestWorkflows(BaseTestCase):
                         ('key2', 'value2'),
                         ('key3', 'value3')])
         result = converter.dict_to_list(d)
-        self.assertEquals(result, [{'key1': 'value1'},
-                                   {'key2': 'value2'},
-                                   {'key3': 'value3'}])
+        self.assertEqual(result, [{'key1': 'value1'},
+                                  {'key2': 'value2'},
+                                  {'key3': 'value3'}])
 
     def test_extract_context_variables(self):
         converter = WorkflowConverter()
@@ -85,7 +87,7 @@ class TestWorkflows(BaseTestCase):
             'value2_list',
         ])
         actual_output = converter.extract_context_variables(output_block)
-        self.assertEquals(actual_output, expected_output)
+        self.assertEqual(actual_output, expected_output)
 
     def test_convert_task_transition_simple(self):
         converter = WorkflowConverter()
@@ -108,7 +110,7 @@ class TestWorkflows(BaseTestCase):
             ]),
             ('do', ['a', 'b', 'c']),
         ])
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_yaql(self):
         converter = WorkflowConverter()
@@ -134,7 +136,7 @@ class TestWorkflows(BaseTestCase):
             ]),
             ('do', ['a', 'b', 'c']),
         ])
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_orquesta_expr(self):
         converter = WorkflowConverter()
@@ -156,7 +158,7 @@ class TestWorkflows(BaseTestCase):
             ]),
             ('do', ['a', 'b', 'c']),
         ])
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_publish(self):
         converter = WorkflowConverter()
@@ -174,7 +176,7 @@ class TestWorkflows(BaseTestCase):
             ('when', '{{ succeeded() }}'),
             ('do', ['a', 'b', 'c']),
         ])
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_transitions(self):
         converter = WorkflowConverter()
@@ -196,7 +198,7 @@ class TestWorkflows(BaseTestCase):
                 {'key_expr': '{{ ctx().test }}'}
             ]),
         ])
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_expr(self):
         converter = WorkflowConverter()
@@ -219,7 +221,7 @@ class TestWorkflows(BaseTestCase):
                 ('do', ['task2']),
             ]),
         ]
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_convert_task_transition_expr_no_orquesta_expr(self):
         converter = WorkflowConverter()
@@ -242,12 +244,12 @@ class TestWorkflows(BaseTestCase):
                 ('do', ['task2']),
             ]),
         ]
-        self.assertEquals(result, expected)
+        self.assertEqual(result, expected)
 
     def test_default_task_transition_map(self):
         converter = WorkflowConverter()
         result = converter.default_task_transition_map()
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('on-success', OrderedMap([
                 ('publish', OrderedMap()),
                 ('orquesta_expr', 'succeeded()'),
@@ -333,7 +335,7 @@ class TestWorkflows(BaseTestCase):
         task_spec = OrderedMap([])
         expr_converter = JinjaExpressionConverter()
         result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
-        self.assertEquals(result, OrderedMap([]))
+        self.assertEqual(result, OrderedMap([]))
 
     def test_convert_task_transitions_common_publish_keys_same_values(self):
         converter = WorkflowConverter()
@@ -396,11 +398,12 @@ class TestWorkflows(BaseTestCase):
         with self.assertRaises(NotImplementedError) as ctx_m:
             converter.convert_task_transitions("tsk_name", task_spec, expr_converter, set())
 
-        self.assertEquals("Task 'tsk_name' contains one or more keys (common_key_2, common_key_3) "
-                          "in both publish and publish-on-error dictionaries that have different "
-                          "values. Please either remove the common keys, or ensure that the "
-                          "values of any common keys are the same.",
-                          str(ctx_m.exception))
+        rgx = re.compile(r"Task 'tsk_name' contains one or more keys "
+                         r"\((?:common_key_2, common_key_3|common_key_3, common_key_2)\) "
+                         r"in both publish and publish-on-error dictionaries that have different "
+                         r"values\. Please either remove the common keys, or ensure that the "
+                         r"values of any common keys are the same\.")
+        self.assertRegex(str(ctx_m.exception), rgx)
 
     def test_convert_with_items(self):
         wi = {
@@ -412,7 +415,7 @@ class TestWorkflows(BaseTestCase):
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
         }
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_concurrency_integer(self):
         wi = {
@@ -426,7 +429,7 @@ class TestWorkflows(BaseTestCase):
             'items': 'b in <% [3, 4, 5] %>',
             'concurrency': 2,
         }
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_concurrency_string(self):
         wi = {
@@ -440,7 +443,7 @@ class TestWorkflows(BaseTestCase):
             'items': 'b in <% [3, 4, 5] %>',
             'concurrency': '2',
         }
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_concurrency_yaql(self):
         wi = {
@@ -454,7 +457,7 @@ class TestWorkflows(BaseTestCase):
             'items': 'b in <% [3, 4, 5] %>',
             'concurrency': '<% ctx().count %>',
         }
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_concurrency_jinja(self):
         wi = {
@@ -468,7 +471,7 @@ class TestWorkflows(BaseTestCase):
             'items': 'b in <% [3, 4, 5] %>',
             'concurrency': '{{ ctx().count }}',
         }
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_list(self):
         wi_list = [
@@ -479,7 +482,7 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
         expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], ctx().all_the_things) %>"
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_list_one_element(self):
         # Check that with-items expression lists with a single element don't
@@ -490,7 +493,7 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
         expected = "a in <% [0, 1, 2] %>"
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_list_unrecognized_expression(self):
         wi_list = [
@@ -507,26 +510,117 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
         wi_str = 'i in <% $.items %>'
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
         expected = 'i in <% ctx().items %>'
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_nonmatching_regex_str(self):
         wi_str = 'b in [3, 4, 5]'
         converter = WorkflowConverter()
         actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_unrecognized_expression(self):
         wi_str = 'BLARGETH'
         converter = WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+
+    def test_simple_retry(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_retry_continue_on(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': '<% $.foo = "continue" %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task_continue_on')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+            ('when', '<% succeeded() and (ctx().foo = "continue") %>'),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_invalid_retry_continue_on_expression(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': 'one fish, two fish, red fish, blue fish',
+        }
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert_retry(retry, 'retry_task_continue_on')
+
+    def test_retry_break_on(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'break-on': '<% $.foo = "break" %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task_break_on')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+            ('when', '<% failed() and not (ctx().foo = "break") %>'),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_invalid_retry_break_on_expression(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'break-on': 'and the cat in the hat knows a lot about that',
+        }
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert_retry(retry, 'retry_task_break_on')
+
+    def test_retry_continue_and_break_on(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': '<% $.foo = "continue" %>',
+            'break-on': '<% $.foo = "break" %>',
+        }
+        converter = WorkflowConverter()
+        actual = converter.convert_retry(retry, 'retry_task_continue_and_break_on')
+        expected = OrderedMap([
+            ('count', 30),
+            ('delay', 5),
+            ('when', '<% (succeeded() and (ctx().foo = "continue")) or '
+                     '(failed() and not (ctx().foo = "break")) %>'),
+        ])
+        self.assertEqual(expected, actual)
+
+    def test_retry_continue_and_break_on_different_expression_types(self):
+        retry = {
+            'count': 30,
+            'delay': 5,
+            'continue-on': '<% $.foo = "continue" %>',
+            'break-on': '{{ _.foo = "break" }}',
+        }
+        converter = WorkflowConverter()
+        with self.assertRaises(NotImplementedError):
+            converter.convert_retry(retry, 'different_expression_types')
 
     def test_convert_tasks(self):
         converter = WorkflowConverter()
@@ -541,7 +635,7 @@ class TestWorkflows(BaseTestCase):
             ]))
         ])
         result = converter.convert_tasks(mistral_tasks, expr_converter, set())
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
                 ('input', OrderedMap([
@@ -571,7 +665,7 @@ class TestWorkflows(BaseTestCase):
             ]))
         ])
         result = converter.convert_tasks(mistral_tasks, expr_converter, set())
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
                 ('input', OrderedMap([
@@ -598,7 +692,7 @@ class TestWorkflows(BaseTestCase):
             ]))
         ])
         result = converter.convert_tasks(mistral_tasks, expr_converter, set())
-        self.assertEquals(result, OrderedMap([
+        self.assertEqual(result, OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
                 ('join', 'all'),
@@ -654,10 +748,6 @@ class TestWorkflows(BaseTestCase):
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('pause-before', True))
-            converter.convert_tasks(mistral_tasks, expr_converter, set())
-
-        with self.assertRaises(NotImplementedError):
-            mistral_tasks = self._create_task(('retry', True))
             converter.convert_tasks(mistral_tasks, expr_converter, set())
 
         with self.assertRaises(NotImplementedError):
@@ -730,7 +820,7 @@ class TestWorkflows(BaseTestCase):
         mistral_wf = {}
         converter = WorkflowConverter()
         result = converter.convert(mistral_wf)
-        self.assertEquals(result, {'version': '1.0'})
+        self.assertEqual(result, {'version': '1.0'})
 
     def test_convert_all(self):
         mistral_wf = OrderedMap([

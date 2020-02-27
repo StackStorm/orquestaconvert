@@ -22,7 +22,7 @@ M_ACTIONS_DIR = os.path.join('tests', 'fixtures', 'pack', 'actions')
 
 # These files should fail autoconversion
 ACTION_FAILING_FILES = [
-    'mistral-fail-retry.yaml',
+    'mistral-fail-retry-continue-and-break-on.yaml',
 ]
 # All of these files should be successfully converted
 ACTION_PASSING_FILES = [
@@ -39,6 +39,10 @@ ACTION_PASSING_FILES = [
     'mistral-with-items-concurrency-yaql.yaml',
     'mistral-transition-expressions.yaml',
     'mistral-publish-only-transitions.yaml',
+    'mistral-retry.yaml',
+    'mistral-retry-continue-on.yaml',
+    'mistral-retry-break-on.yaml',
+    'mistral-retry-continue-and-break-on.yaml',
 ]
 
 
@@ -158,5 +162,8 @@ class BasePackClientRunTestCase(BaseCLITestCase):
         dirhash = {}
         for dirf in files:
             with open(os.path.join(directory, dirf), 'r') as f:
-                dirhash[dirf] = hashlib.sha256(f.read()).hexdigest()
+                fdata = f.read()
+                if not six.PY2:
+                    fdata = fdata.encode('utf-8')
+                dirhash[dirf] = hashlib.sha256(fdata).hexdigest()
         return dirhash

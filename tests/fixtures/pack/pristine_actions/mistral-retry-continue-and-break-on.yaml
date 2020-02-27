@@ -1,0 +1,14 @@
+---
+name: mistral-retry-continue-and-break-on
+description: A sample workflow used to test the retry feature with both continue-on and break-on.
+pack: examples
+runner_type: mistral-v2
+entry_point: workflows/mistral-retry-continue-and-break-on.yaml
+enabled: true
+parameters:
+    tempfile:
+        type: string
+        required: true
+    message:
+        type: string
+        required: true

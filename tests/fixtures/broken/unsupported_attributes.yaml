@@ -8,10 +8,11 @@ input:
       - bar
 tasks:
   random_task:
-    retry:
-      delay: 4
-      count: 15
+    pause-before: yes
     with:
       items: i in <% ctx().items %>
       concurrency: 4
     action: core.noop
+    retry:
+      count: 15
+      delay: 4

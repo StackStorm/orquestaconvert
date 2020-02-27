@@ -1,0 +1,25 @@
+version: '2.0'
+
+examples.mistral-retry-continue-and-break-on:
+    description: >
+        A sample workflow that demonstrates how to handle rollback and retry on error. 
+        In this example, the workflow will error and then continue to retry until the file 
+        /tmp/done exists. A parallel task will wait for some time before creating the
+        file. When completed, /tmp/done will be deleted.
+    type: direct
+    tasks:
+        init:
+            action: core.local cmd="rm -f /tmp/done"
+            on-success:
+                - test-error-undo-retry
+        test-error-undo-retry:
+            retry:
+                count: 30
+                delay: 1
+                continue-on: <% $.foo = 'continue' %>
+                break-on: <% $.bar = 'BREAK' %>
+            action: core.local cmd="echo 'Do something useful here.';"
+            on-success:
+                - delete-file
+        delete-file:
+            action: core.local cmd="rm -f /tmp/done"

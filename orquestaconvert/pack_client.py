@@ -9,7 +9,7 @@ import sys
 
 import yaml
 
-from client import Client
+from orquestaconvert.client import Client
 from orquestaconvert.utils import yaml_utils
 
 

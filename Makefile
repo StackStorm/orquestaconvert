@@ -161,7 +161,7 @@ update-orquesta-requirements: virtualenv
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	for py in $(PY_FILES); do \
 		echo "Checking $$py"; \
-		flake8 --config $(PYMODULE_DIR)/lint-configs/python/.flake8 $$py || exit 1; \
+		flake8 --config $(PYMODULE_DIR)/lint-configs/python/.flake8 $$py || exit $?; \
 	done
 
 
@@ -171,7 +171,7 @@ update-orquesta-requirements: virtualenv
 	@echo "==================== pylint ===================="
 	@echo
 	. $(VIRTUALENV_DIR)/bin/activate; \
-	echo $(PY_FILES) | xargs python -m pylint -E --rcfile=$(PYMODULE_DIR)/lint-configs/python/.pylintrc && echo "--> No pylint issues found." || exit 1
+	echo $(PY_FILES) | xargs python -m pylint -E --rcfile=$(PYMODULE_DIR)/lint-configs/python/.pylintrc && echo "--> No pylint issues found." || exit $?
 
 
 .PHONY: .json-lint
@@ -182,7 +182,7 @@ update-orquesta-requirements: virtualenv
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	for json in $(JSON_FILES); do \
 		echo "Checking $$json"; \
-		python -mjson.tool $$json > /dev/null || exit 1; \
+		python -mjson.tool $$json > /dev/null || exit $?; \
 	done
 
 
@@ -194,7 +194,7 @@ update-orquesta-requirements: virtualenv
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	for yaml in $(YAML_FILES); do \
 		echo "Checking $$yaml"; \
-		python -c "import yaml; yaml.safe_load(open('$$yaml', 'r'))" || exit 1; \
+		python -c "import yaml; yaml.safe_load(open('$$yaml', 'r'))" || exit $?; \
 	done
 
 
@@ -205,7 +205,7 @@ update-orquesta-requirements: virtualenv
 	@echo
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	if [ -d "$(PYMODULE_TESTS_DIR)" ]; then \
-		nosetests $(NOSE_OPTS) $(PYMODULE_TESTS_DIR) || exit 1; \
+		nosetests $(NOSE_OPTS) $(PYMODULE_TESTS_DIR) || exit $?; \
 	else \
 		echo "Tests directory not found: $(PYMODULE_TESTS_DIR)";\
 	fi;
@@ -218,7 +218,7 @@ update-orquesta-requirements: virtualenv
 	@echo
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	if [ -d "$(PYMODULE_TESTS_DIR)" ]; then \
-		nosetests $(NOSE_OPTS) --cover-html $(PYMODULE_TESTS_DIR) || exit 1; \
+		nosetests $(NOSE_OPTS) --cover-html $(PYMODULE_TESTS_DIR) || exit $?; \
 	else \
 		echo "Tests directory not found: $(PYMODULE_TESTS_DIR)";\
 	fi;
@@ -231,7 +231,7 @@ update-orquesta-requirements: virtualenv
 	@echo
 	. $(VIRTUALENV_DIR)/bin/activate; \
 	if [ -d "$(PYMODULE_TESTS_DIR)" ]; then \
-		nosetests $(NOSE_OPTS),tests --cover-tests --cover-html $(PYMODULE_TESTS_DIR) || exit 1; \
+		nosetests $(NOSE_OPTS),tests --cover-tests --cover-html $(PYMODULE_TESTS_DIR) || exit $?; \
 	else \
 		echo "Tests directory not found: $(PYMODULE_TESTS_DIR)";\
 	fi;

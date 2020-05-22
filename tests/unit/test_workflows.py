@@ -62,7 +62,7 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         output_block = OrderedMap([
             ('key1', '{{ ctx().value1_str }}'),
-            ('list_<%% ctx().list_key2 %>', [
+            ('list_<%% ctx().list_list_key2 %>', [
                 'a',
                 '<%% ctx().value2_list %>',
                 {
@@ -82,6 +82,7 @@ class TestWorkflows(BaseTestCase):
             'inner_key_3',
             'inner_key_4',
             'inner_value_2',
+            'list_list_key2',
             'list_key2',
             'value1_str',
             'value2_list',

@@ -62,7 +62,24 @@ class TestWorkflows(BaseTestCase):
         converter = WorkflowConverter()
         output_block = OrderedMap([
             ('key1', '{{ ctx().value1_str }}'),
-            ('list_<%% ctx().list_key2 %>', [
+            ('direct_ctx_key', '<%% ctx(ctx_dict_key1) %>'),
+            # this is actually valid YAQL - dictionary keys do not have to be quoted
+            ('ctx_dict1', '<%% ctx.get(ctx_dict_key1) %>'),
+            ('ctx_dict1_sq', "<%% ctx.get('ctx_dict_key1_sq') %>"),
+            ('ctx_dict1_dq', '<%% ctx.get("ctx_dict_key1_dq") %>'),
+            ('ctx_dict1_or', "<%% ctx.get('ctx_dict_key1_or') or 'none' %>"),
+            ('ctx_dict2', '<%% ctx.get(ctx_dict_key2).not_this_though %>'),
+            ('ctx_dict3', "<%% ctx.get(ctx_dict_key3, with_bare_default_value) %>"),
+            ('ctx_dict4', "<%% ctx.get(ctx_dict_key4, 'with default value [single quotes]') %>"),
+            ('ctx_dict5', '<%% ctx.get(ctx_dict_key5, "with default value [double quotes]") %>'),
+            ('ctx_dict6', '<%% ctx.get(ctx_dict_key6, {}).ignore_this_key %>'),
+            ('bare_ctx_dict1', '<%% ctx().get(dict_key1) %>'),
+            ('bare_ctx_dict2', '<%% ctx().get(dict_key2).not_this_though %>'),
+            ('bare_ctx_dict3', "<%% ctx().get(dict_key3, with_default_value) %>"),
+            ('bare_ctx_dict4', "<%% ctx().get(dict_key4, 'with default value [single quotes]') %>"),
+            ('bare_ctx_dict5', '<%% ctx().get(dict_key5, "with default value [double quotes]") %>'),
+            ('bare_ctx_dict6', '<%% ctx().get(dict_key6, {}).ignore_this_key %>'),
+            ('list_<%% ctx().list_list_key2 %>', [
                 'a',
                 '<%% ctx().value2_list %>',
                 {
@@ -82,9 +99,25 @@ class TestWorkflows(BaseTestCase):
             'inner_key_3',
             'inner_key_4',
             'inner_value_2',
+            'list_list_key2',
             'list_key2',
             'value1_str',
             'value2_list',
+            'ctx_dict_key1',
+            'ctx_dict_key1_sq',
+            'ctx_dict_key1_dq',
+            'ctx_dict_key1_or',
+            'ctx_dict_key2',
+            'ctx_dict_key3',
+            'ctx_dict_key4',
+            'ctx_dict_key5',
+            'ctx_dict_key6',
+            'dict_key1',
+            'dict_key2',
+            'dict_key3',
+            'dict_key4',
+            'dict_key5',
+            'dict_key6',
         ])
         actual_output = converter.extract_context_variables(output_block)
         self.assertEqual(actual_output, expected_output)

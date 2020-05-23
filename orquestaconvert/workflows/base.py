@@ -54,7 +54,7 @@ MISTRAL_ACTION_CONVERSION_TABLE = {
 WITH_ITEMS_PATTERN = r'^\s*(?P<var>\w+)\s+in\s+(?P<expr>(?:<%|{{)?\s*.+?\s*(?:%>|}})?)\s*$'
 WITH_ITEMS_EXPR_RGX = re.compile(WITH_ITEMS_PATTERN)
 
-CTX_PATTERN = r'\bctx\([\'"]*(\w+)[\'"]*\)|\bctx\(\).(\w+)\b'
+CTX_PATTERN = r'\bctx(?:(?:\(\))?\.get)?\([\'"]?(\w+)[\'"]?(?:,\s*[\'"]?[^\'")]+[\'"]?)?\s*\)|\bctx\(\).(\w+)\b'
 CTX_RGX = re.compile(CTX_PATTERN)
 
 

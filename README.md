@@ -128,3 +128,8 @@ Explicitly rints the validation results for all Orquesta workflows.
   - `wait-after`
   - `wait-before`
   - `workflow`
+
+
+# Development
+
+Donated to the StackStorm project by [Encore Technologies](https://encore.tech)

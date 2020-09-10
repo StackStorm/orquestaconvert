@@ -1,4 +1,4 @@
-[![Build Status](https://circleci.com/gh/EncoreTechnologies/orquestaconvert.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/EncoreTechnologies/orquestaconvert) [![codecov](https://codecov.io/gh/EncoreTechnologies/orquestaconvert/branch/master/graph/badge.svg)](https://codecov.io/gh/EncoreTechnologies/orquestaconvert) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://circleci.com/gh/StackStorm/orquestaconvert.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/StackStorm/orquestaconvert) [![codecov](https://codecov.io/gh/StackStorm/orquestaconvert/branch/master/graph/badge.svg)](https://codecov.io/gh/StackStorm/orquestaconvert) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # orquestaconvert
 
@@ -13,7 +13,7 @@ The script automatically sets up a `virtualenv` (if it doesn't exist) that conta
 Simply run the command for the first time and everything will get setup for you:
 
 ``` shell
-git clone https://github.com/EncoreTechnologies/orquestaconvert.git
+git clone https://github.com/StackStorm/orquestaconvert.git
 cd orquestaconvert
 ./bin/orquestaconvert.sh --help
 ```
@@ -128,3 +128,8 @@ Explicitly rints the validation results for all Orquesta workflows.
   - `wait-after`
   - `wait-before`
   - `workflow`
+
+
+# Development
+
+Donated to the StackStorm project by [Encore Technologies](https://encore.tech)

@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from orquesta.specs.mistral.v2 import workflows as mistral_workflow
+from orquestaconvert.specs.mistral.v2 import workflows as mistral_workflow
 from orquesta.specs.native.v1 import models as orquesta_workflow
 
 from orquestaconvert.workflows.base import WorkflowConverter

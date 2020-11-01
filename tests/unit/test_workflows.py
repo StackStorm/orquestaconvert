@@ -1,19 +1,29 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
-
-from tests.base_test_case import BaseTestCase
-
-from orquestaconvert.expressions.jinja import JinjaExpressionConverter
-from orquestaconvert.expressions.yaql import YaqlExpressionConverter
-from orquestaconvert.workflows.base import WorkflowConverter
-
 import ruamel.yaml
+
+from orquestaconvert.expressions import jinja
+from orquestaconvert.expressions import yaql as yql
+from orquestaconvert.workflows import base as workflows_base
+
+from tests import base_test_case
+
 OrderedMap = ruamel.yaml.comments.CommentedMap
+base_test_case.BaseTestCase.maxDiff = None
 
 
-BaseTestCase.maxDiff = None
-
-
-class TestWorkflows(BaseTestCase):
+class TestWorkflows(base_test_case.BaseTestCase):
     __test__ = True
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +31,7 @@ class TestWorkflows(BaseTestCase):
         self.maxDiff = None
 
     def test_group_task_transitions(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions_list = [
             "simple transition string",
             {"key": "expr"},
@@ -37,19 +47,19 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(expr, expected)
 
     def test_group_task_string_transition(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions_string = 'next_task'
         simple, expr = converter.group_task_transitions(transitions_string)
         self.assertEqual(simple, ['next_task'])
 
     def test_group_task_transitions_raises_bad_type(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions_list = [["list is bad"]]
         with self.assertRaises(TypeError):
             converter.group_task_transitions(transitions_list)
 
     def test_dict_to_list(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         d = OrderedMap([('key1', 'value1'),
                         ('key2', 'value2'),
                         ('key3', 'value3')])
@@ -59,7 +69,7 @@ class TestWorkflows(BaseTestCase):
                                   {'key3': 'value3'}])
 
     def test_extract_context_variables(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         output_block = OrderedMap([
             ('key1', '{{ ctx().value1_str }}'),
             ('direct_ctx_key', '<%% ctx(ctx_dict_key1) %>'),
@@ -123,12 +133,12 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(actual_output, expected_output)
 
     def test_convert_task_transition_simple(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions = ['a', 'b', 'c']
         publish = OrderedMap([('key_plain', 'data'),
                               ('key_expr', '{{ _.test }}')])
         orquesta_expr = 'succeeded()'
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         result = converter.convert_task_transition_simple(transitions,
                                                           publish,
@@ -146,12 +156,12 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_yaql(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions = ['a', 'b', 'c']
         publish = OrderedMap([('key_plain', 'data'),
                               ('key_expr', '{{ _.test }}')])
         orquesta_expr = 'succeeded()'
-        expr_converter = YaqlExpressionConverter()
+        expr_converter = yql.YaqlExpressionConverter()
 
         result = converter.convert_task_transition_simple(transitions,
                                                           publish,
@@ -172,12 +182,12 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_orquesta_expr(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions = ['a', 'b', 'c']
         publish = OrderedMap([('key_plain', 'data'),
                               ('key_expr', '{{ _.test }}')])
         orquesta_expr = None
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         result = converter.convert_task_transition_simple(transitions,
                                                           publish,
@@ -194,11 +204,11 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_publish(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions = ['a', 'b', 'c']
         publish = None
         orquesta_expr = 'succeeded()'
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         result = converter.convert_task_transition_simple(transitions,
                                                           publish,
@@ -212,12 +222,12 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_simple_no_transitions(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         transitions = None
         publish = OrderedMap([('key_plain', 'data'),
                               ('key_expr', '{{ _.test }}')])
         orquesta_expr = 'succeeded()'
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         result = converter.convert_task_transition_simple(transitions,
                                                           publish,
@@ -234,7 +244,7 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_expr(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         expression_list = OrderedMap([('<% $.test %>', ['task1', 'task3']),
                                       ('{{ _.other }}', ['task2'])])
         orquesta_expr = 'succeeded()'
@@ -257,7 +267,7 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_convert_task_transition_expr_no_orquesta_expr(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         expression_list = OrderedMap([('<% $.test %>', ['task1', 'task3']),
                                       ('{{ _.other }}', ['task2'])])
         orquesta_expr = None
@@ -280,7 +290,7 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(result, expected)
 
     def test_default_task_transition_map(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.default_task_transition_map()
         self.assertEqual(result, OrderedMap([
             ('on-success', OrderedMap([
@@ -298,7 +308,7 @@ class TestWorkflows(BaseTestCase):
         ]))
 
     def test_convert_task_transitions(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         task_spec = OrderedMap([
             ('publish', OrderedMap([
                 ('good_data', '{{ _.good }}'),
@@ -318,7 +328,7 @@ class TestWorkflows(BaseTestCase):
                 'do_thing_always'
             ]),
         ])
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
         result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
         self.assertDictEqual(result, OrderedMap([
             ('next', [
@@ -364,14 +374,14 @@ class TestWorkflows(BaseTestCase):
         ]))
 
     def test_convert_task_transitions_empty(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         task_spec = OrderedMap([])
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
         result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
         self.assertEqual(result, OrderedMap([]))
 
     def test_convert_task_transitions_common_publish_keys_same_values(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         task_spec = OrderedMap([
             ('publish', OrderedMap([
                 ('good_data', '{{ _.good }}'),
@@ -387,7 +397,7 @@ class TestWorkflows(BaseTestCase):
                 'do_thing_always'
             ]),
         ])
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         result = converter.convert_task_transitions("task_name", task_spec, expr_converter, set())
         self.assertDictEqual(result, OrderedMap([
@@ -407,7 +417,7 @@ class TestWorkflows(BaseTestCase):
         ]))
 
     def test_convert_task_transitions_common_publish_keys_different_values(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         task_spec = OrderedMap([
             ('publish', OrderedMap([
                 ('good_data', '{{ _.good }}'),
@@ -426,7 +436,7 @@ class TestWorkflows(BaseTestCase):
                 'do_thing_always'
             ]),
         ])
-        expr_converter = JinjaExpressionConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
 
         with self.assertRaises(NotImplementedError) as ctx_m:
             converter.convert_task_transitions("tsk_name", task_spec, expr_converter, set())
@@ -442,8 +452,8 @@ class TestWorkflows(BaseTestCase):
         wi = {
             'with-items': 'b in <% [3, 4, 5] %>',
         }
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items(wi, yql.YaqlExpressionConverter)
         # This should NOT have a concurrency key
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
@@ -455,8 +465,8 @@ class TestWorkflows(BaseTestCase):
             'with-items': 'b in <% [3, 4, 5] %>',
             'concurrency': 2,
         }
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items(wi, yql.YaqlExpressionConverter)
         # This must have a concurrency key
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
@@ -469,8 +479,8 @@ class TestWorkflows(BaseTestCase):
             'with-items': 'b in <% [3, 4, 5] %>',
             'concurrency': '2',
         }
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items(wi, yql.YaqlExpressionConverter)
         # This must have a concurrency key
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
@@ -483,8 +493,8 @@ class TestWorkflows(BaseTestCase):
             'with-items': 'b in <% [3, 4, 5] %>',
             'concurrency': '<% $.count %>',
         }
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items(wi, yql.YaqlExpressionConverter)
         # This must have a concurrency key
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
@@ -497,8 +507,8 @@ class TestWorkflows(BaseTestCase):
             'with-items': 'b in <% [3, 4, 5] %>',
             'concurrency': '{{ _.count }}',
         }
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items(wi, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items(wi, yql.YaqlExpressionConverter)
         # This must have a concurrency key
         expected = {
             'items': 'b in <% [3, 4, 5] %>',
@@ -512,8 +522,8 @@ class TestWorkflows(BaseTestCase):
             'b in [3, 4, 5]',
             'c in <% $.all_the_things %>',
         ]
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_list, yql.YaqlExpressionConverter)
         expected = "a, b, c in <% zip([0, 1, 2], [3, 4, 5], ctx().all_the_things) %>"
         self.assertEqual(expected, actual)
 
@@ -523,8 +533,8 @@ class TestWorkflows(BaseTestCase):
         wi_list = [
             'a in <% [0, 1, 2] %>',
         ]
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_list, yql.YaqlExpressionConverter)
         expected = "a in <% [0, 1, 2] %>"
         self.assertEqual(expected, actual)
 
@@ -534,42 +544,42 @@ class TestWorkflows(BaseTestCase):
             'BLARGETH',  # bad syntax
             'c in <% $.all_the_things %>',
         ]
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
-            converter.convert_with_items_expr(wi_list, YaqlExpressionConverter)
+            converter.convert_with_items_expr(wi_list, yql.YaqlExpressionConverter)
 
     def test_convert_with_items_expr_matching_regex_str(self):
         wi_str = 'b in <% [3, 4, 5] %>'
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, yql.YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
         self.assertEqual(expected, actual)
 
         wi_str = 'i in <% $.items %>'
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, yql.YaqlExpressionConverter)
         expected = 'i in <% ctx().items %>'
         self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_nonmatching_regex_str(self):
         wi_str = 'b in [3, 4, 5]'
-        converter = WorkflowConverter()
-        actual = converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+        converter = workflows_base.WorkflowConverter()
+        actual = converter.convert_with_items_expr(wi_str, yql.YaqlExpressionConverter)
         expected = 'b in <% [3, 4, 5] %>'
         self.assertEqual(expected, actual)
 
     def test_convert_with_items_expr_unrecognized_expression(self):
         wi_str = 'BLARGETH'
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
-            converter.convert_with_items_expr(wi_str, YaqlExpressionConverter)
+            converter.convert_with_items_expr(wi_str, yql.YaqlExpressionConverter)
 
     def test_simple_retry(self):
         retry = {
             'count': 30,
             'delay': 5,
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         actual = converter.convert_retry(retry, 'retry_task')
         expected = OrderedMap([
             ('count', 30),
@@ -583,7 +593,7 @@ class TestWorkflows(BaseTestCase):
             'delay': 5,
             'continue-on': '<% $.foo = "continue" %>',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         actual = converter.convert_retry(retry, 'retry_task_continue_on')
         expected = OrderedMap([
             ('count', 30),
@@ -598,7 +608,7 @@ class TestWorkflows(BaseTestCase):
             'delay': 5,
             'continue-on': 'one fish, two fish, red fish, blue fish',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert_retry(retry, 'retry_task_continue_on')
 
@@ -608,7 +618,7 @@ class TestWorkflows(BaseTestCase):
             'delay': 5,
             'break-on': '<% $.foo = "break" %>',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         actual = converter.convert_retry(retry, 'retry_task_break_on')
         expected = OrderedMap([
             ('count', 30),
@@ -623,7 +633,7 @@ class TestWorkflows(BaseTestCase):
             'delay': 5,
             'break-on': 'and the cat in the hat knows a lot about that',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert_retry(retry, 'retry_task_break_on')
 
@@ -634,7 +644,7 @@ class TestWorkflows(BaseTestCase):
             'continue-on': '<% $.foo = "continue" %>',
             'break-on': '<% $.foo = "break" %>',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         actual = converter.convert_retry(retry, 'retry_task_continue_and_break_on')
         expected = OrderedMap([
             ('count', 30),
@@ -651,13 +661,13 @@ class TestWorkflows(BaseTestCase):
             'continue-on': '<% $.foo = "continue" %>',
             'break-on': '{{ _.foo = "break" }}',
         }
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert_retry(retry, 'different_expression_types')
 
     def test_convert_tasks(self):
-        converter = WorkflowConverter()
-        expr_converter = JinjaExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
+        expr_converter = jinja.JinjaExpressionConverter()
         mistral_tasks = OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -686,8 +696,8 @@ class TestWorkflows(BaseTestCase):
         ]))
 
     def test_convert_tasks_yaql(self):
-        converter = WorkflowConverter()
-        expr_converter = YaqlExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
+        expr_converter = yql.YaqlExpressionConverter()
         mistral_tasks = OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -716,8 +726,8 @@ class TestWorkflows(BaseTestCase):
         ]))
 
     def test_convert_tasks_join(self):
-        converter = WorkflowConverter()
-        expr_converter = YaqlExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
+        expr_converter = yql.YaqlExpressionConverter()
         mistral_tasks = OrderedMap([
             ('jinja_task', OrderedMap([
                 ('action', 'mypack.actionname'),
@@ -741,7 +751,7 @@ class TestWorkflows(BaseTestCase):
         ])
 
     def test_convert_action_unsupported_mistral_builtin_actions(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
 
         with self.assertRaises(NotImplementedError):
             converter.convert_action('std.echo')
@@ -755,7 +765,7 @@ class TestWorkflows(BaseTestCase):
             converter.convert_action('std.ssh')
 
     def test_convert_action_mistral_builtin_actions(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
 
         self.assertEqual(converter.convert_action('std.fail'), 'fail')
         self.assertEqual(converter.convert_action('std.http'), 'core.http')
@@ -763,7 +773,7 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(converter.convert_action('std.noop'), 'core.noop')
 
     def test_convert_action_others(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
 
         # Test non-built-in actions
         self.assertEqual(converter.convert_action('basil.exposition'), 'basil.exposition')
@@ -772,8 +782,8 @@ class TestWorkflows(BaseTestCase):
         self.assertEqual(converter.convert_action('number 3'), 'number 3')
 
     def test_convert_tasks_unsupported_attributes(self):
-        converter = WorkflowConverter()
-        expr_converter = YaqlExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
+        expr_converter = yql.YaqlExpressionConverter()
 
         with self.assertRaises(NotImplementedError):
             mistral_tasks = self._create_task(('keep-result', True))
@@ -809,49 +819,49 @@ class TestWorkflows(BaseTestCase):
 
     def test_expr_type_converter_none(self):
         expr_type = None
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.expr_type_converter(expr_type)
-        self.assertIsInstance(result, JinjaExpressionConverter)
+        self.assertIsInstance(result, jinja.JinjaExpressionConverter)
 
     def test_expr_type_converter_string_jinja(self):
         expr_type = 'jinja'
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.expr_type_converter(expr_type)
-        self.assertIsInstance(result, JinjaExpressionConverter)
+        self.assertIsInstance(result, jinja.JinjaExpressionConverter)
 
     def test_expr_type_converter_string_yaql(self):
         expr_type = 'yaql'
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.expr_type_converter(expr_type)
-        self.assertIsInstance(result, YaqlExpressionConverter)
+        self.assertIsInstance(result, yql.YaqlExpressionConverter)
 
     def test_expr_type_converter_string_bad_raises(self):
         expr_type = 'junk'
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(TypeError):
             converter.expr_type_converter(expr_type)
 
     def test_expr_type_converter_class_jinja(self):
-        expr_type = JinjaExpressionConverter()
-        converter = WorkflowConverter()
+        expr_type = jinja.JinjaExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.expr_type_converter(expr_type)
         self.assertIs(result, expr_type)
 
     def test_expr_type_converter_class_yaql(self):
-        expr_type = YaqlExpressionConverter()
-        converter = WorkflowConverter()
+        expr_type = yql.YaqlExpressionConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.expr_type_converter(expr_type)
         self.assertIs(result, expr_type)
 
     def test_expr_type_converter_class_bad_raises(self):
         expr_type = []
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(TypeError):
             converter.expr_type_converter(expr_type)
 
     def test_convert_empty(self):
         mistral_wf = {}
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.convert(mistral_wf)
         self.assertEqual(result, {'version': '1.0'})
 
@@ -882,7 +892,7 @@ class TestWorkflows(BaseTestCase):
                 ])),
             ])),
         ])
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         result = converter.convert(mistral_wf)
 
         self.assertEqual(result, OrderedMap([
@@ -930,12 +940,12 @@ class TestWorkflows(BaseTestCase):
                 ('stderr', "<% $.stderr %>"),
             ])),
         ])
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert(mistral_wf)
 
     def test_convert_workflow_unsupported_types(self):
-        converter = WorkflowConverter()
+        converter = workflows_base.WorkflowConverter()
         with self.assertRaises(NotImplementedError):
             converter.convert(OrderedMap([
                 ('version', '1.0'),

@@ -1,21 +1,33 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
 
-from tests.base_test_case import BaseTestCase
+from orquestaconvert.expressions import mixed
 
-from orquestaconvert.expressions.mixed import MixedExpressionConverter
+from tests import base_test_case
 
 
-class TestExpressionsMixed(BaseTestCase):
+class TestExpressionsMixed(base_test_case.BaseTestCase):
     __test__ = True
 
     def test_convert_string(self):
         s = "ABC {{ _.test }}"
-        result = MixedExpressionConverter.convert(s)
+        result = mixed.MixedExpressionConverter.convert(s)
         self.assertEqual(result, "ABC {{ ctx().test }}")
 
     def test_convert_string_items(self):
         s = "i in {{ _.test1 }}<% $.test2 %>{{ _.test3 }}<% $.test4 %>"
-        result = MixedExpressionConverter.convert(s, item_vars=['test1', 'test2'])
+        result = mixed.MixedExpressionConverter.convert(s, item_vars=['test1', 'test2'])
         expected = "i in {{ item(test1) }}<% item(test2) %>{{ ctx().test3 }}<% ctx().test4 %>"
         self.assertEqual(result, expected)
 
@@ -28,7 +40,7 @@ class TestExpressionsMixed(BaseTestCase):
             "test1": "FOO {{ ctx().bar }}",
             "test2": "FOOBAR <% ctx().baz %>",
         }
-        result = MixedExpressionConverter.convert(data)
+        result = mixed.MixedExpressionConverter.convert(data)
         self.assertEqual(expected, result)
 
     def test_convert_list(self):
@@ -40,7 +52,7 @@ class TestExpressionsMixed(BaseTestCase):
             "FOO {{ ctx().bar }}",
             "FOOBAR <% ctx().baz %>",
         ]
-        result = MixedExpressionConverter.convert(data)
+        result = mixed.MixedExpressionConverter.convert(data)
         self.assertEqual(expected, result)
 
     def test_convert_dict_of_lists_of_dicts(self):
@@ -74,7 +86,7 @@ class TestExpressionsMixed(BaseTestCase):
             "bool1": False,
             "null1": None,
         }
-        result = MixedExpressionConverter.convert(data)
+        result = mixed.MixedExpressionConverter.convert(data)
         self.assertItemsEqual(expected.keys(), result.keys())
         self.assertItemsEqual(expected['list1'][0].keys(), result['list1'][0].keys())
         self.assertItemsEqual(expected['list1'][0].values(), result['list1'][0].values())
@@ -88,5 +100,5 @@ class TestExpressionsMixed(BaseTestCase):
             r"Could not recognize expression '<object object at 0x[0-9a-f]+>'; "
             r"results may not be accurate.")
         with self.assertWarnsRegex(SyntaxWarning, expected_warning_regex):
-            result = MixedExpressionConverter.convert(expr_obj)
+            result = mixed.MixedExpressionConverter.convert(expr_obj)
         self.assertEqual(result, expr_obj)

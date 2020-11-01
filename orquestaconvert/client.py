@@ -1,13 +1,24 @@
 #!/usr/bin/env python
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import argparse
 import sys
 
+from orquesta.specs.native.v1 import models as native_v1_models
 from orquestaconvert.specs.mistral.v2 import workflows as mistral_workflow
-from orquesta.specs.native.v1 import models as orquesta_workflow
-
-from orquestaconvert.workflows.base import WorkflowConverter
 from orquestaconvert.utils import yaml_utils
+from orquestaconvert.workflows import base as workflows_base
 
 
 class Client(object):
@@ -44,14 +55,14 @@ class Client(object):
 
         # convert Mistral -> Orquesta
         mistral_wf = mistral_wf_data_ruamel[mistral_wf_spec.name]
-        workflow_converter = WorkflowConverter()
+        workflow_converter = workflows_base.WorkflowConverter()
         orquesta_wf_data_ruamel = workflow_converter.convert(mistral_wf, expr_type,
                                                              force=self.args.force)
         orquesta_wf_data_str = yaml_utils.obj_to_yaml(orquesta_wf_data_ruamel)
         orquesta_wf_data = yaml_utils.yaml_to_obj(orquesta_wf_data_str)
 
         # validate we've generated a proper Orquesta workflow
-        orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
+        orquesta_wf_spec = native_v1_models.instantiate(orquesta_wf_data)
         if not self.args.force:
             self.validate_workflow_spec(orquesta_wf_spec)
 
@@ -63,7 +74,7 @@ class Client(object):
         orquesta_wf_data, orquesta_wf_data_ruamel = yaml_utils.read_yaml(filename)
 
         # validate the Orquesta workflow
-        orquesta_wf_spec = orquesta_workflow.instantiate(orquesta_wf_data)
+        orquesta_wf_spec = native_v1_models.instantiate(orquesta_wf_data)
         self.validate_workflow_spec(orquesta_wf_spec)
 
         if self.args.verbose:

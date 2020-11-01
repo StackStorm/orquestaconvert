@@ -1,14 +1,26 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
 import six
 import warnings
 
 import ruamel.yaml
 
-from orquestaconvert.expressions import ExpressionConverter
-from orquestaconvert.expressions.base import BaseExpressionConverter
-from orquestaconvert.expressions.jinja import JinjaExpressionConverter
-from orquestaconvert.expressions.yaql import YaqlExpressionConverter
-from orquestaconvert.expressions.mixed import MixedExpressionConverter
+from orquestaconvert import expressions
+from orquestaconvert.expressions import base as expr_base
+from orquestaconvert.expressions import jinja
+from orquestaconvert.expressions import mixed
+from orquestaconvert.expressions import yaql as yql
 from orquestaconvert.utils import task_utils
 from orquestaconvert.utils import type_utils
 
@@ -135,7 +147,7 @@ class WorkflowConverter(object):
 
         # add in published variables
         if publish:
-            publish_converted = ExpressionConverter.convert_dict(publish)
+            publish_converted = expressions.ExpressionConverter.convert_dict(publish)
             simple_transition['publish'] = self.dict_to_list(publish_converted)
 
         # add in the transition list
@@ -167,12 +179,12 @@ class WorkflowConverter(object):
         transitions = []
         for expr, task_list in six.iteritems(expression_list):
             expr_transition = ruamel.yaml.comments.CommentedMap()
-            expr_converted = ExpressionConverter.convert(expr)
+            expr_converted = expressions.ExpressionConverter.convert(expr)
 
             # for some transitions (on-complete) the orquesta_expr may be empty
             # so only add it in, if it's necessary
             if orquesta_expr:
-                converter = ExpressionConverter.get_converter(expr_converted)
+                converter = expressions.ExpressionConverter.get_converter(expr_converted)
                 expr_converted = converter.unwrap_expression(expr_converted)
                 o_expr = '{} and ({})'.format(orquesta_expr, expr_converted)
                 o_expr = converter.wrap_expression(o_expr)
@@ -181,7 +193,7 @@ class WorkflowConverter(object):
 
             expr_transition['when'] = o_expr
             if publish:
-                converted_publish = ExpressionConverter.convert_dict(publish)
+                converted_publish = expressions.ExpressionConverter.convert_dict(publish)
                 expr_transition['publish'] = [{k: v} for k, v in converted_publish.items()]
 
                 expr_transition['when'] = self.replace_immediately_referenced_variables(task_name,
@@ -207,12 +219,12 @@ class WorkflowConverter(object):
             # First off, make sure they are the same type of expression,
             # we don't want to inject a Jinja expression in the middle
             # of a YAQL expression
-            when_expr_type = ExpressionConverter.expression_type(when_expr)
-            publish_expr_type = ExpressionConverter.expression_type(publish_dict[variable])
+            when_expr_type = expressions.ExpressionConverter.expression_type(when_expr)
+            publish_expr_type = expressions.ExpressionConverter.expression_type(publish_dict[variable])
 
             if when_expr_type == publish_expr_type:
                 # Grab the variable expression
-                converter = ExpressionConverter.get_converter(publish_dict[variable])
+                converter = expressions.ExpressionConverter.get_converter(publish_dict[variable])
                 unwrapped_expr = converter.unwrap_expression(publish_dict[variable])
 
                 # Replace double parentheses
@@ -396,7 +408,7 @@ class WorkflowConverter(object):
         o_action = MISTRAL_ACTION_CONVERSION_TABLE.get(m_action, m_action)
 
         kwargs = {'item_vars': self.task_with_item_vars}
-        return MixedExpressionConverter.convert_string(o_action, **kwargs)
+        return mixed.MixedExpressionConverter.convert_string(o_action, **kwargs)
 
     def convert_retry(self, m_retry, task_name):
         # Convert 'retry' specification
@@ -440,7 +452,7 @@ class WorkflowConverter(object):
         with_break = None
         if m_retry.get('continue-on'):
             continue_expr = m_retry['continue-on']
-            continue_converter = ExpressionConverter.get_converter(continue_expr)
+            continue_converter = expressions.ExpressionConverter.get_converter(continue_expr)
             if not continue_converter:
                 raise NotImplementedError("Could not convert continue-on expression: {converter} "
                                           "in task '{task_name}'"
@@ -452,7 +464,7 @@ class WorkflowConverter(object):
 
         if m_retry.get('break-on'):
             break_expr = m_retry['break-on']
-            break_converter = ExpressionConverter.get_converter(break_expr)
+            break_converter = expressions.ExpressionConverter.get_converter(break_expr)
             if not break_converter:
                 raise NotImplementedError("Could not convert break-on expression: {converter} "
                                           "in task '{task_name}'"
@@ -485,7 +497,7 @@ class WorkflowConverter(object):
 
     def convert_input(self, input_):
         kwargs = {'item_vars': self.task_with_item_vars}
-        return MixedExpressionConverter.convert_dict(input_, **kwargs)
+        return mixed.MixedExpressionConverter.convert_dict(input_, **kwargs)
 
     def convert_with_items_expr(self, expression, expr_converter):
         # Convert all with-items attributes
@@ -536,7 +548,7 @@ class WorkflowConverter(object):
             if m:
                 var = m.group('var')
                 expr = m.group('expr')
-                converter = ExpressionConverter.get_converter(expr)
+                converter = expressions.ExpressionConverter.get_converter(expr)
                 if converter:
                     expr = converter.unwrap_expression(expr)
                     expr = converter.convert_string(expr)
@@ -578,7 +590,7 @@ class WorkflowConverter(object):
 
             # Only try to convert the concurrency expression if it's a str
             if isinstance(concurrency_expr, six.string_types):
-                converter = ExpressionConverter.get_converter(concurrency_expr)
+                converter = expressions.ExpressionConverter.get_converter(concurrency_expr)
                 if converter:
                     concurrency_expr = converter.unwrap_expression(concurrency_expr)
                     concurrency_expr = converter.convert_string(concurrency_expr)
@@ -633,16 +645,16 @@ class WorkflowConverter(object):
 
     def expr_type_converter(self, expr_type):
         if expr_type is None:
-            expr_converter = JinjaExpressionConverter()
+            expr_converter = jinja.JinjaExpressionConverter()
         elif isinstance(expr_type, six.string_types):
             expr_type = expr_type.lower()
             if expr_type == 'jinja':
-                expr_converter = JinjaExpressionConverter()
+                expr_converter = jinja.JinjaExpressionConverter()
             elif expr_type == 'yaql':
-                expr_converter = YaqlExpressionConverter()
+                expr_converter = yql.YaqlExpressionConverter()
             else:
                 raise TypeError("Unknown expression type: {}".format(expr_type))
-        elif isinstance(expr_type, BaseExpressionConverter):
+        elif isinstance(expr_type, expr_base.BaseExpressionConverter):
             expr_converter = expr_type
         else:
             raise TypeError("Unknown expression class type: {}".format(type(expr_type)))
@@ -675,14 +687,14 @@ class WorkflowConverter(object):
                                           format(mistral_wf['type']))
 
         if mistral_wf.get('input'):
-            orquesta_wf['input'] = ExpressionConverter.convert_list(mistral_wf['input'])
+            orquesta_wf['input'] = expressions.ExpressionConverter.convert_list(mistral_wf['input'])
 
         if mistral_wf.get('vars'):
-            expression_vars = ExpressionConverter.convert_dict(mistral_wf['vars'])
+            expression_vars = expressions.ExpressionConverter.convert_dict(mistral_wf['vars'])
             orquesta_wf['vars'] = self.dict_to_list(expression_vars)
 
         if mistral_wf.get('output'):
-            output = ExpressionConverter.convert_dict(mistral_wf['output'])
+            output = expressions.ExpressionConverter.convert_dict(mistral_wf['output'])
             orquesta_wf['output'] = self.dict_to_list(output)
 
             variables_used_in_output = self.extract_context_variables(output)

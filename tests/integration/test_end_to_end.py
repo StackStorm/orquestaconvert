@@ -1,18 +1,30 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import six
 import warnings
 
-from tests.base_test_case import BaseTestCase
+from orquestaconvert import client
 
-from orquestaconvert.client import Client
+from tests import base_test_case
 
 
-class TestEndToEnd(BaseTestCase):
+class TestEndToEnd(base_test_case.BaseTestCase):
     __test__ = True
 
     def setUp(self):
         super(TestEndToEnd, self).setUp()
         self.maxDiff = 20000
-        self.client = Client()
+        self.client = client.Client()
         parser = self.client.parser()
         # Ensure that the client has an args attribute
         self.client.args = parser.parse_args(['file.yaml'])

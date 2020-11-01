@@ -1,10 +1,23 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import ruamel.yaml.comments
 import six
 import warnings
+
 import orquesta.expressions.base
 
-from orquestaconvert.expressions.jinja import JinjaExpressionConverter
-from orquestaconvert.expressions.yaql import YaqlExpressionConverter
+from orquestaconvert.expressions import jinja
+from orquestaconvert.expressions import yaql as yql
 from orquestaconvert.utils import type_utils
 
 
@@ -55,9 +68,9 @@ class ExpressionConverter(object):
     def get_converter(cls, expr):
         expr_type = cls.expression_type(expr)
         if expr_type == 'jinja':
-            return JinjaExpressionConverter
+            return jinja.JinjaExpressionConverter
         elif expr_type == 'yaql':
-            return YaqlExpressionConverter
+            return yql.YaqlExpressionConverter
         return None
 
     @classmethod

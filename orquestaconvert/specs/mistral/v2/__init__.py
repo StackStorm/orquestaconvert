@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orquesta.specs.mistral.v2 import base as mistral_v2_base
+from orquestaconvert.specs.mistral.v2 import base as mistral_v2_base
 
 
 VERSION = mistral_v2_base.Spec.get_version()

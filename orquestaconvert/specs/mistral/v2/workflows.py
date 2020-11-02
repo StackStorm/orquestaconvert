@@ -17,11 +17,11 @@ import six
 
 from orquesta import exceptions as exc
 from orquesta.expressions import base as expr_base
-from orquesta.specs.mistral.v2 import base as mistral_spec_base
-from orquesta.specs.mistral.v2 import tasks as task_models
-from orquesta.specs.mistral.v2 import types as mistral_spec_types
 from orquesta.specs import types as spec_types
 from orquesta.utils import dictionary as dict_util
+from orquestaconvert.specs.mistral.v2 import base as mistral_spec_base
+from orquestaconvert.specs.mistral.v2 import tasks as task_models
+from orquestaconvert.specs.mistral.v2 import types as mistral_spec_types
 
 
 LOG = logging.getLogger(__name__)

@@ -19,11 +19,11 @@ from six.moves import queue
 
 from orquesta import exceptions as exc
 from orquesta.expressions import base as expr_base
-from orquesta.specs.mistral.v2 import base as mistral_spec_base
-from orquesta.specs.mistral.v2 import policies as policy_models
 from orquesta.specs import types as spec_types
 from orquesta.utils import dictionary as dict_util
 from orquesta.utils import jsonify as json_util
+from orquestaconvert.specs.mistral.v2 import base as mistral_spec_base
+from orquestaconvert.specs.mistral.v2 import policies as policy_models
 
 
 LOG = logging.getLogger(__name__)

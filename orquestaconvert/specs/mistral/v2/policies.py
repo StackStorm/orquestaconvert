@@ -14,8 +14,8 @@
 
 import logging
 
-from orquesta.specs.mistral.v2 import base as mistral_v2_spec_base
 from orquesta.specs import types as spec_types
+from orquestaconvert.specs.mistral.v2 import base as mistral_v2_spec_base
 
 
 LOG = logging.getLogger(__name__)

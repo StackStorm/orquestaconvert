@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from orquesta.specs.mistral import v2 as mistral_v2_specs
-from orquesta.specs.mistral.v2 import tasks as task_models
-from orquesta.specs.mistral.v2 import workflows as workflow_models
+from orquestaconvert.specs.mistral import v2 as mistral_v2_specs
+from orquestaconvert.specs.mistral.v2 import tasks as task_models
+from orquestaconvert.specs.mistral.v2 import workflows as workflow_models
 
 
 VERSION = mistral_v2_specs.VERSION

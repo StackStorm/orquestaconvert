@@ -1,3 +1,5 @@
+# Copyright 2019 Extreme Networks, Inc.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,16 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import ruamel.yaml
-
-from orquestaconvert.utils import type_utils
-
-from tests import base_test_case
-
-
-class TestTypeUtils(base_test_case.BaseTestCase):
-    __test__ = True
-
-    def test_dict_types(self):
-        self.assertIsInstance({}, type_utils.dict_types)
-        self.assertIsInstance(ruamel.yaml.comments.CommentedMap(), type_utils.dict_types)
+WORKFLOW_TYPE = {"enum": ["reverse", "direct"]}

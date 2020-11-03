@@ -1,13 +1,25 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import print_function
-
-from tests.base_test_case import BasePackClientRunTestCase
-
-from orquestaconvert.pack_client import PackClient
 
 import mock
 
+from orquestaconvert import pack_client
 
-class PackClientTestCase(BasePackClientRunTestCase):
+from tests import base_test_case
+
+
+class PackClientTestCase(base_test_case.BasePackClientRunTestCase):
     __test__ = True
 
     def setUp(self):
@@ -15,7 +27,7 @@ class PackClientTestCase(BasePackClientRunTestCase):
 
         self.client = mock.MagicMock()
         self.client.run = mock.MagicMock(return_value=0)
-        self.pack_client = PackClient()
+        self.pack_client = pack_client.PackClient()
 
     def test_get_mistral_workflow_files_in_p_dir(self):
         workflows = self.pack_client.get_workflow_files('mistral-v2', self.p_actions_dir)

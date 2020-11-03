@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
-# Licensed to the StackStorm, Inc ('StackStorm') under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -15,11 +13,12 @@
 # limitations under the License.
 
 from __future__ import absolute_import
+
 import os
 import re
 import sys
 
-from distutils.version import StrictVersion
+from distutils import version
 
 GET_PIP = 'curl https://bootstrap.pypa.io/get-pip.py | python'
 
@@ -41,10 +40,10 @@ __all__ = [
 
 
 def check_pip_version(min_version='6.0.0'):
+    """Ensure that a minimum supported version of pip is installed.
+
     """
-    Ensure that a minimum supported version of pip is installed.
-    """
-    if StrictVersion(pip.__version__) < StrictVersion(min_version):
+    if version.StrictVersion(pip.__version__) < version.StrictVersion(min_version):
         print("Upgrade pip, your version '{0}' "
               "is outdated. Minimum required version is '{1}':\n{2}".format(pip.__version__,
                                                                             min_version,
@@ -53,8 +52,8 @@ def check_pip_version(min_version='6.0.0'):
 
 
 def fetch_requirements(requirements_file_path):
-    """
-    Return a list of requirements and links by parsing the provided requirements file.
+    """Return a list of requirements and links by parsing the provided requirements file.
+
     """
     links = []
     reqs = []
@@ -102,7 +101,8 @@ def fetch_requirements(requirements_file_path):
 
 
 def apply_vagrant_workaround():
-    """
+    """Function which detects if the script is being executed inside vagrant
+
     Function which detects if the script is being executed inside vagrant and if it is, it deletes
     "os.link" attribute.
     Note: Without this workaround, setup.py sdist will fail when running inside a shared directory
@@ -113,8 +113,8 @@ def apply_vagrant_workaround():
 
 
 def get_version_string(init_file):
-    """
-    Read __version__ string for an init file.
+    """Read __version__ string for an init file.
+
     """
 
     with open(init_file, 'r') as fp:
